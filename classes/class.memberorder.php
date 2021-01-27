@@ -349,6 +349,20 @@
 				return false;
 		}
 
+
+		function getAffiliateCode($force = false){
+			if(!empty($this->affiliate_id) && !$force)
+				return $this->affiliate_id;
+
+			global $wpdb;
+			$this->affiliate_id = $wpdb->get_row("SELECT dc.* FROM $wpdb->pmpro_discount_codes dc LEFT JOIN $wpdb->pmpro_discount_codes_uses dcu ON dc.id = dcu.code_id WHERE dcu.order_id = '" . $this->id . "' LIMIT 1");
+
+			//filter @since v1.7.14
+			$this->affiliate_id = apply_filters("pmpro_order_discount_code", $this->affiliate_id, $this);
+
+			return $this->affiliate_id;
+		}
+
 		/**
 		 * Get a discount code object for the code used in this order.
 		 *
@@ -625,8 +639,7 @@
 		/**
 		 * Save/update the values of the order in the database.
 		 */
-		function saveOrder()
-		{
+		function saveOrder(){
 			global $current_user, $wpdb, $pmpro_checkout_id;
 
 			//get a random code to use for the public ID
@@ -695,6 +708,9 @@
 				$this->ExpirationDate = "";
 			if (empty($this->status))
 				$this->status = "";
+			
+			if (empty($this->seat_hash))
+				$this->seat_hash = "";
 
 			if(empty($this->gateway))
 				$this->gateway = pmpro_getOption("gateway");
@@ -756,7 +772,7 @@
 									`timestamp` = '" . esc_sql($this->datetime) . "',
 									`affiliate_id` = '" . esc_sql($this->affiliate_id) . "',
 									`affiliate_subid` = '" . esc_sql($this->affiliate_subid) . "',
-									`notes` = '" . esc_sql($this->notes) . "',
+									`notes` = '" . esc_sql($this->seat_hash) . "',
 									`checkout_id` = " . intval($this->checkout_id) . "
 									WHERE id = '" . esc_sql( $this->id ) . "'
 									LIMIT 1";
@@ -870,10 +886,15 @@
 		/**
 		 * Call the process step of the gateway class.
 		 */
-		function process()
-		{
+		function process(){
 			if (is_object($this->Gateway)) {
 				return $this->Gateway->process($this);
+			}
+		}
+
+		function charge(){
+			if (is_object($this->Gateway)) {
+				return $this->Gateway->charge($this);
 			}
 		}
 

@@ -229,7 +229,7 @@ function pmpro_lostpassword_url( $redirect = '' ) {
  */
 function pmpro_login_form_hidden_field( $html ) {
 	$html .= '<input type="hidden" name="pmpro_login_form_used" value="1" />';
-
+	$html .= '<div style="text-align:center;"><img style="text-align:center;width:20%;" src="https://poweredbychange.com/wp-content/uploads/2021/01/oie_QU2nkbCDr0F3.png"></div><br>';
 	return $html;
 }
 
@@ -465,7 +465,7 @@ function pmpro_login_forms_handler( $show_menu = true, $show_logout_link = true,
 						}
 					?>
 					<?php
-						pmpro_login_form( array( 'value_username' => esc_html( $username ), 'redirect' => esc_url( $redirect_to ) ) );
+						pmpro_login_form( array('value_username' => esc_html( $username ), 'redirect' => esc_url( $redirect_to ) ) );
 						pmpro_login_forms_handler_nav( 'login' );
 					?>
 				</div> <!-- end pmpro_login_wrap -->				
@@ -549,7 +549,7 @@ function pmpro_lost_password_form() { ?>
 		<div class="<?php echo pmpro_get_element_class( 'pmpro_lost_password-fields' ); ?>">
 			<div class="<?php echo pmpro_get_element_class( 'pmpro_lost_password-field pmpro_lost_password-field-user_login', 'pmpro_lost_password-field-user_login' ); ?>">
 				<label for="user_login"><?php esc_html_e( 'Username or Email Address', 'paid-memberships-pro' ); ?></label>
-				<input type="text" name="user_login" id="user_login" class="<?php echo pmpro_get_element_class( 'input', 'user_login' ); ?>" size="20" />
+				<input type="text" name="user_login" id="user_login" class="<?php echo pmpro_get_element_class( 'input', 'user_login' ); ?>" size="60" />
 			</div>
 		</div> <!-- end pmpro_lost_password-fields -->
 		<div class="<?php echo pmpro_get_element_class( 'pmpro_submit' ); ?>">

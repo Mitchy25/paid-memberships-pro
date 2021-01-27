@@ -804,11 +804,14 @@
 					</div>
 				</td>
 				<td>
-					<?php if(pmpro_isLevelFree($level)) { ?>
-						<?php _e('FREE', 'paid-memberships-pro' );?>
-					<?php } else { ?>
-						<?php echo str_replace( 'The price for membership is', '', pmpro_getLevelCost($level)); ?>
-					<?php } ?>
+					<?php
+						
+						if(pmpro_isLevelFree($level)) { 
+						 	_e('FREE', 'paid-memberships-pro' );
+						} else { 
+							 echo str_replace( 'The price for membership is', '', pmpro_getLevelCost($level)); 
+						} 
+					?>
 				</td>
 				<td>
 					<?php if(!pmpro_isLevelExpiring($level)) { ?>

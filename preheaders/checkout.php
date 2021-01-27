@@ -115,7 +115,7 @@ if ( $tospage ) {
 }
 
 //load em up (other fields)
-global $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth, $ExpirationYear;
+global $affiliate_id, $affiliate_code, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth, $ExpirationYear;
 
 if ( isset( $_REQUEST['order_id'] ) ) {
 	$order_id = intval( $_REQUEST['order_id'] );
@@ -255,6 +255,28 @@ if ( isset( $_REQUEST['tos'] ) ) {
 	$tos = "";
 }
 
+if ( isset( $_REQUEST['seats'] ) ) {
+	$seats = intval( $_REQUEST['seats'] );
+} else {
+	$seats = "";
+}
+
+if ( isset( $_REQUEST['originalSeats'] ) ) {
+	$originalSeats = intval( $_REQUEST['originalSeats'] );
+} else {
+	$originalSeats = "";
+}
+
+if ($seats){
+	$newSeats = intval($seats) - intval($originalSeats);
+}
+
+if ( isset( $_REQUEST['affiliate_code'] ) ) {
+	$affiliate_code = preg_replace( "/[^A-Za-z0-9\-]/", "", $_REQUEST['affiliate_code'] );
+} else {
+	$affiliate_code = "";
+}
+
 $submit = pmpro_was_checkout_form_submitted();
 
 /**
@@ -282,7 +304,7 @@ $pmpro_required_billing_fields = array(
 );
 $pmpro_required_billing_fields = apply_filters( "pmpro_required_billing_fields", $pmpro_required_billing_fields );
 $pmpro_required_user_fields    = array(
-	"username"      => $username,
+	// "username"      => $username,
 	"password"      => $password,
 	"password2"     => $password2,
 	"bemail"        => $bemail,
@@ -514,7 +536,8 @@ if ( ! empty( $pmpro_confirmed ) ) {
 
 		//insert user
 		$new_user_array = apply_filters( 'pmpro_checkout_new_user_array', array(
-				"user_login" => $username,
+				//"user_login" => $username,
+				"user_login" => $bemail,
 				"user_pass"  => $password,
 				"user_email" => $bemail,
 				"first_name" => $first_name,
@@ -660,7 +683,10 @@ if ( ! empty( $pmpro_confirmed ) ) {
 			//add an item to the history table, cancel old subscriptions
 			if ( ! empty( $morder ) ) {
 				$morder->user_id       = $user_id;
-				$morder->membership_id = $pmpro_level->id;
+				$morder->membership_id = $pmpro_level->id;  
+				
+				//Add Affiliate ID after User ID is available
+				add_user_meta($user_id,"affiliateCode",$morder->affiliate_id);
 				$morder->saveOrder();
 			}
 
@@ -759,7 +785,12 @@ if ( ! empty( $pmpro_confirmed ) ) {
 			}
 
 			//redirect to confirmation
-			$rurl = pmpro_url( "confirmation", "?level=" . $pmpro_level->id );
+			if ($seats){
+				$rurl = pmpro_url( "confirmation", "?level=" . $pmpro_level->id ."&originalSeats=" . $originalSeats . "&seats=".$seats);
+			} else {
+				$rurl = pmpro_url( "confirmation", "?level=" . $pmpro_level->id);
+			}
+			
 			$rurl = apply_filters( "pmpro_confirmation_url", $rurl, $user_id, $pmpro_level );
 			wp_redirect( $rurl );
 			exit;

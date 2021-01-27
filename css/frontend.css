@@ -158,6 +158,9 @@ form.pmpro_form .pmpro_payment-discount-code .input,
 form.pmpro_form #other_discount_code.input {
 	max-width: 40%;
 }
+form.pmpro_form #other_affiliate_code.input {
+	max-width: 40%;
+}
 form.pmpro_form .lite {
 	color: #666;
 }
