@@ -355,10 +355,17 @@
 				return $this->affiliate_id;
 
 			global $wpdb;
-			$this->affiliate_id = $wpdb->get_row("SELECT dc.* FROM $wpdb->pmpro_discount_codes dc LEFT JOIN $wpdb->pmpro_discount_codes_uses dcu ON dc.id = dcu.code_id WHERE dcu.order_id = '" . $this->id . "' LIMIT 1");
+			$sql = $wpdb->get_row("SELECT dc.* FROM $wpdb->pmpro_discount_codes dc LEFT JOIN $wpdb->pmpro_discount_codes_uses dcu ON dc.id = dcu.code_id WHERE dcu.order_id = '" . $this->id . "' LIMIT 1");
+			if (substr($sql->code,7) == "PBC-Ref"){
+				$this->affiliate_id = $sql;
+			} else {
+				$this->affiliate_id = null;
+			}
 
 			//filter @since v1.7.14
 			$this->affiliate_id = apply_filters("pmpro_order_discount_code", $this->affiliate_id, $this);
+			
+			
 
 			return $this->affiliate_id;
 		}
@@ -375,7 +382,12 @@
 				return $this->discount_code;
 
 			global $wpdb;
-			$this->discount_code = $wpdb->get_row("SELECT dc.* FROM $wpdb->pmpro_discount_codes dc LEFT JOIN $wpdb->pmpro_discount_codes_uses dcu ON dc.id = dcu.code_id WHERE dcu.order_id = '" . $this->id . "' LIMIT 1");
+			$sql = $wpdb->get_row("SELECT dc.* FROM $wpdb->pmpro_discount_codes dc LEFT JOIN $wpdb->pmpro_discount_codes_uses dcu ON dc.id = dcu.code_id WHERE dcu.order_id = '" . $this->id . "' LIMIT 1");
+			if (substr($sql->code,7) == "PBC-Ref"){
+				$this->discount_code = null;
+			} else {
+				$this->discount_code = $sql;
+			}
 
 			//filter @since v1.7.14
 			$this->discount_code = apply_filters("pmpro_order_discount_code", $this->discount_code, $this);
