@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: Paid Memberships Pro
- * Plugin URI: https://www.paidmembershipspro.com
- * Description: The most complete member management and membership subscriptions plugin for WordPress.
+ * Plugin Name: Paid Memberships Pro - PBC
+ * Plugin URI: https://techsquid.co.nz
+ * Description: PBC Customised PMP.
  * Version: 2.5.3
- * Author: Stranger Studios
- * Author URI: https://www.strangerstudios.com
+ * Author: TechSquid
+ * Author URI: https://techsquid.co.nz
  * Text Domain: paid-memberships-pro
  * Domain Path: /languages
  */
