@@ -21,8 +21,8 @@ if ( isset( $_REQUEST['l'] ) ) {
 	$l = false;
 }
 
-if ( isset( $_REQUEST['discount_code'] ) ) {
-	$discount_code = intval( $_REQUEST['discount_code'] );
+if ( isset( $_REQUEST['discount-code'] ) ) {
+	$discount_code = intval( $_REQUEST['discount-code'] );
 } else {
 	$discount_code = false;
 }
@@ -1118,7 +1118,7 @@ if ( function_exists( 'pmpro_add_email_order_modal' ) ) {
 				$sqlQuery .= "ORDER BY id DESC ";
 				$codes = $wpdb->get_results($sqlQuery, OBJECT);
 				if ( ! empty( $codes ) ) { ?>
-				<select id="discount_code" name="discount_code">
+				<select id="discount-code" name="discount-code">
 					<?php foreach ( $codes as $code ) { ?>
 						<option
 							value="<?php echo esc_attr( $code->id ); ?>" <?php selected( $discount_code, $code->id ); ?>><?php echo esc_html( $code->code ); ?></option>
@@ -1160,7 +1160,7 @@ if ( function_exists( 'pmpro_add_email_order_modal' ) ) {
 					jQuery('#predefined-date').hide();
 					jQuery('#status').hide();
 					jQuery('#l').hide();
-					jQuery('#discount_code').hide();
+					jQuery('#discount-code').hide();
 					jQuery('#from').hide();
 					jQuery('#to').hide();
 					jQuery('#submit').show();
@@ -1176,7 +1176,7 @@ if ( function_exists( 'pmpro_add_email_order_modal' ) ) {
 					jQuery('#predefined-date').hide();
 					jQuery('#status').hide();
 					jQuery('#l').hide();
-					jQuery('#discount_code').hide();
+					jQuery('#discount-code').hide();
 					jQuery('#submit').show();
 					jQuery('#from').show();
 					jQuery('#to').show();
@@ -1192,7 +1192,7 @@ if ( function_exists( 'pmpro_add_email_order_modal' ) ) {
 					jQuery('#predefined-date').show();
 					jQuery('#status').hide();
 					jQuery('#l').hide();
-					jQuery('#discount_code').hide();
+					jQuery('#discount-code').hide();
 					jQuery('#submit').show();
 					jQuery('#from').hide();
 					jQuery('#to').hide();
@@ -1208,7 +1208,7 @@ if ( function_exists( 'pmpro_add_email_order_modal' ) ) {
 					jQuery('#predefined-date').hide();
 					jQuery('#status').hide();
 					jQuery('#l').show();
-					jQuery('#discount_code').hide();
+					jQuery('#discount-code').hide();
 					jQuery('#submit').show();
 					jQuery('#from').hide();
 					jQuery('#to').hide();
@@ -1224,7 +1224,7 @@ if ( function_exists( 'pmpro_add_email_order_modal' ) ) {
 					jQuery('#predefined-date').hide();
 					jQuery('#status').hide();
 					jQuery('#l').hide();
-					jQuery('#discount_code').show();
+					jQuery('#discount-code').show();
 					jQuery('#submit').show();
 					jQuery('#from').hide();
 					jQuery('#to').hide();
@@ -1240,7 +1240,7 @@ if ( function_exists( 'pmpro_add_email_order_modal' ) ) {
 					jQuery('#predefined-date').hide();
 					jQuery('#status').show();
 					jQuery('#l').hide();
-					jQuery('#discount_code').hide();
+					jQuery('#discount-code').hide();
 					jQuery('#submit').show();
 					jQuery('#from').hide();
 					jQuery('#to').hide();
@@ -1256,7 +1256,7 @@ if ( function_exists( 'pmpro_add_email_order_modal' ) ) {
 					jQuery('#predefined-date').hide();
 					jQuery('#status').hide();
 					jQuery('#l').hide();
-					jQuery('#discount_code').hide();
+					jQuery('#discount-code').hide();
 					jQuery('#submit').show();
 					jQuery('#from').hide();
 					jQuery('#to').hide();
@@ -1459,7 +1459,7 @@ if ( function_exists( 'pmpro_add_email_order_modal' ) ) {
 						<?php if ( ! empty( $order->billing->street ) ) { ?>
 							<?php echo esc_html( $order->billing->street ); ?><br/>
 							<?php if ( $order->billing->city && $order->billing->state ) { ?>
-								<?php echo esc_html( $order->billing->city ); ?>, <?php echo esc_html( $order->billing->state ); ?><?php echo esc_html( $order->billing->zip ); ?>
+								<?php echo esc_html( $order->billing->city ); ?>, <?php echo esc_html( $order->billing->state ); ?> <?php echo esc_html( $order->billing->zip ); ?>
 									<?php
 									if ( ! empty( $order->billing->country ) ) {
 										echo esc_html( $order->billing->country ); }
