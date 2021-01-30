@@ -1,4 +1,5 @@
 <?php
+/*
  * Plugin Name: Paid Memberships Pro - PBC
  * Plugin URI: https://techsquid.co.nz
  * Description: PBC Customised PMP.
