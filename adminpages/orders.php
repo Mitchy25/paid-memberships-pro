@@ -279,14 +279,17 @@ if ( ! empty( $_REQUEST['save'] ) ) {
 	}
 
 	// affiliate stuff
-	$affiliates = apply_filters( 'pmpro_orders_show_affiliate_ids', false );
-	if ( ! empty( $affiliates ) ) {
-		if ( ! in_array( 'affiliate_id', $read_only_fields ) ) {
-			$order->affiliate_id = sanitize_text_field( $_POST['affiliate_id'] );
-		}
-		if ( ! in_array( 'affiliate_subid', $read_only_fields ) ) {
-			$order->affiliate_subid = sanitize_text_field( $_POST['affiliate_subid'] );
-		}
+	// $affiliates = apply_filters( 'pmpro_orders_show_affiliate_ids', false );
+	// if ( ! empty( $affiliates ) ) {
+		// if ( ! in_array( 'affiliate_id', $read_only_fields ) ) {
+		// 	$order->affiliate_id = sanitize_text_field( $_POST['affiliate_id'] );
+		// }
+		// if ( ! in_array( 'affiliate_subid', $read_only_fields ) ) {
+		// 	$order->affiliate_subid = sanitize_text_field( $_POST['affiliate_subid'] );
+		// }
+	// }
+	if ( ! in_array( 'affiliate_code', $read_only_fields ) && isset( $_POST['affiliate_code'] ) ) {
+		$order->affiliate_id = sanitize_text_field( $_POST['affiliate_code'] );
 	}
 
 	// check nonce for saving
@@ -295,6 +298,7 @@ if ( ! empty( $_REQUEST['save'] ) ) {
 		$nonceokay = false;
 	}
 
+	error_log(json_encode($order));
 	// save
 	if ( $order->saveOrder() !== false && $nonceokay ) {
 		$order_id = $order->id;
@@ -315,7 +319,38 @@ if ( ! empty( $_REQUEST['save'] ) ) {
 	// also update the discount code if needed
 	if( isset( $_REQUEST['discount_code_id'] ) ) {
 		$order->updateDiscountCode( intval( $_REQUEST['discount_code_id'] ) );
+		
+		//If Discount Code is a Referral for Coach, add to Affiliate
+		global $wpdb;
+		// $discountCodeID = $wpdb->get_var("
+		// 	SELECT code_id FROM $wpdb->pmpro_discount_codes_uses
+		// 	WHERE order_id = " . $order_id . "
+		// 	LIMIT 1");
+		$discountCodeID = $_REQUEST['discount_code_id'];
+
+		$codes = get_option("pmpro_code_user_ids");
+		if(is_array($codes)) {
+			foreach($codes as $code_id => $code_user_id) {
+				if($code_id == $discountCodeID){
+					$affiliateUserID = $code_user_id;
+					break;
+				}
+			}
+		}
+		$levelID = $wpdb->get_var("
+			SELECT level_id FROM $wpdb->pmpro_discount_codes_uses
+			WHERE code_id = " . $discountCodeID . "
+			LIMIT 1");
+		if ($levelID->level_id == 1){
+			//This is a Coach Referral Code - Add User ID to Order Affiliate
+			$results = $wpdb->get_results("UPDATE `wp_pmpro_membership_orders` SET affiliate_id=" . $affiliateUserID . " WHERE id=" . $order_id);
+		}
+		
+		
 	}
+
+	
+	
 } else {
 	// order passed?
 	if ( ! empty( $_REQUEST['order'] ) ) {

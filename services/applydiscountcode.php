@@ -3,24 +3,35 @@
 	$isapage = true;
 
 	//in case the file is loaded directly
-	if(!defined("ABSPATH"))
-	{
+	if(!defined("ABSPATH"))	{
 		define('WP_USE_THEMES', false);
 		require_once(dirname(__FILE__) . '/../../../../wp-load.php');
 	}
 
-	//vars
 	global $wpdb;
-	if(!empty($_REQUEST['code']))
-	{
-		$discount_code = preg_replace("/[^A-Za-z0-9\-]/", "", $_REQUEST['code']);
+
+	//Flip Between Discount Code and Affiliate Code
+
+	$discount_code = "";
+	$discount_code_id = "";
+	$affiliate_code = "";
+	$affiliate_code_id = "";
+
+	if (isset($_REQUEST['discount_code'])){
+		$discount_code = preg_replace("/[^A-Za-z0-9\-]/", "", $_REQUEST['discount_code']);
 		$discount_code_id = $wpdb->get_var("SELECT id FROM $wpdb->pmpro_discount_codes WHERE code = '" . $discount_code . "' LIMIT 1");
+	} elseif (isset($_REQUEST['affiliate_code'])){
+		$affiliate_code = preg_replace("/[^A-Za-z0-9\-]/", "", $_REQUEST['affiliate_code']);
+		$affiliate_code_id = $wpdb->get_var("SELECT id FROM $wpdb->pmpro_discount_codes WHERE code = '" . $discount_code . "' LIMIT 1");
 	}
-	else
-	{
-		$discount_code = "";
-		$discount_code_id = "";
-	}
+	//vars
+	// if(!empty($_REQUEST['code'])){
+	// 	$discount_code = preg_replace("/[^A-Za-z0-9\-]/", "", $_REQUEST['code']);
+	// 	$discount_code_id = $wpdb->get_var("SELECT id FROM $wpdb->pmpro_discount_codes WHERE code = '" . $discount_code . "' LIMIT 1");
+	// } else {
+	// 	$discount_code = "";
+	// 	$discount_code_id = "";
+	// }
 
 	if ( ! empty( $_REQUEST['level'] ) ) {
 		$level_str = $_REQUEST['level'];
@@ -35,10 +46,26 @@
 	else
 		$msgfield = NULL;
 
+	if (!empty($_REQUEST['validateType'])){
+		$validateType = $_REQUEST['validateType'];
+	} else {
+		$validateType = false;
+	}
+
+	if (!empty($_REQUEST['type'])){
+		$type = $_REQUEST['type'];
+	} else {
+		$type = null;
+	}
+
 	//check that the code is valid
-	$codecheck = pmpro_checkDiscountCode($discount_code, $level_ids, true);
-	if($codecheck[0] == false)
-	{
+	if ($discount_code){
+		$codecheck = pmpro_checkDiscountCode($discount_code, $level_ids, true, $validateType, $type);
+	} else {
+		$codecheck = pmpro_checkDiscountCode($affiliate_code, $level_ids, true, $validateType, $type);
+	}
+	
+	if($codecheck[0] == false){
 		//uh oh. show code error
 		echo pmpro_no_quotes($codecheck[1]);
 		?>
@@ -57,6 +84,42 @@
 		<?php
 
 		exit(0);
+	}
+
+	//Dont need to change pricing information
+	if ($affiliate_code){
+		printf(__("The %s affiliate code has been applied to your order. ", 'paid-memberships-pro' ), $affiliate_code);
+		?>
+		<script>
+			jQuery('#<?php echo $msgfield?>').show();
+			jQuery('#<?php echo $msgfield?>').removeClass('pmpro_error');
+			jQuery('#<?php echo $msgfield?>').addClass('pmpro_success');
+			jQuery('#<?php echo $msgfield?>').addClass('pmpro_discount_code_msg');
+			// jQuery('#other_affiliate_code_tr').hide();
+			// jQuery('#other_affiliate_code_p').show();
+
+			if (jQuery("#affiliate_code").length) {
+				jQuery('#affiliate_code').val('<?php echo $affiliate_code?>');
+			} else {
+				jQuery('<input>').attr({
+					type: 'hidden',
+					id: 'affiliate_code',
+					name: 'affiliate_code',
+					value: '<?php echo $affiliate_code?>'
+				}).appendTo('#pmpro_form');
+			}
+
+			jQuery('#other_affiliate_code_tr').hide();
+			jQuery('#other_affiliate_code_p').html('<a id="other_affiliate_code_a" href="javascript:void(0);"><?php _e('Click here to change your affiliate code', 'paid-memberships-pro' );?></a>.');
+			jQuery('#other_affiliate_code_p').show();
+
+			jQuery('#other_affiliate_code_a').click(function() {
+				jQuery('#other_affiliate_code_tr').show();
+				jQuery('#other_affiliate_code_p').hide();
+			});
+		</script>
+		<?php
+		exit;
 	}
 
 	// Okay, send back new price info.
@@ -145,29 +208,23 @@
 			}
 
 			//tell gateway javascripts whether or not to fire (e.g. no Stripe on free levels)
-			if(pmpro_areLevelsFree($code_levels))
-			{
+			if(pmpro_areLevelsFree($code_levels)){
 			?>
 				pmpro_require_billing = false;
 			<?php
-			}
-			else
-			{
+			}else{
 			?>
 				pmpro_require_billing = true;
 			<?php
 			}
 
 			//hide/show billing
-			if(pmpro_areLevelsFree($code_levels) || pmpro_getGateway() == "paypalexpress" || pmpro_getGateway() == "paypalstandard" || pmpro_getGateway() == 'check')
-			{
+			if(pmpro_areLevelsFree($code_levels) || pmpro_getGateway() == "paypalexpress" || pmpro_getGateway() == "paypalstandard" || pmpro_getGateway() == 'check'){
 				?>
 				jQuery('#pmpro_billing_address_fields').hide();
 				jQuery('#pmpro_payment_information_fields').hide();
 				<?php
-			}
-			else
-			{
+			} else {
 				?>
 				jQuery('#pmpro_billing_address_fields').show();
 				jQuery('#pmpro_payment_information_fields').show();
@@ -183,17 +240,13 @@
 			}
 
 			//hide/show paypal button
-			if(pmpro_getGateway() == "paypalexpress" || pmpro_getGateway() == "paypalstandard")
-			{
-				if(pmpro_areLevelsFree($code_levels))
-				{
+			if(pmpro_getGateway() == "paypalexpress" || pmpro_getGateway() == "paypalstandard")	{
+				if(pmpro_areLevelsFree($code_levels)){
 					?>
 					jQuery('#pmpro_paypalexpress_checkout').hide();
 					jQuery('#pmpro_submit_span').show();
 					<?php
-				}
-				else
-				{
+				} else {
 					?>
 					jQuery('#pmpro_submit_span').hide();
 					jQuery('#pmpro_paypalexpress_checkout').show();

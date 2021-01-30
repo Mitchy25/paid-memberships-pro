@@ -1,24 +1,19 @@
 <?php	
 	//require_once(dirname(__FILE__) . "/class.pmprogateway.php");
-	class PMProGateway
-	{
-		function __construct($gateway = NULL)
-		{
+	class PMProGateway{
+		function __construct($gateway = NULL){
 			$this->gateway = $gateway;
 			return $this->gateway;
 		}										
 		
-		function process(&$order)
-		{
+		function process(&$order){
+
 			//check for initial payment
-			if(floatval($order->InitialPayment) == 0)
-			{
+			if(floatval($order->InitialPayment) == 0){
 				//auth first, then process
-				if($this->authorize($order))
-				{						
+				if($this->authorize($order)){						
 					$this->void($order);										
-					if(!pmpro_isLevelTrial($order->membership_level))
-					{
+					if(!pmpro_isLevelTrial($order->membership_level)){
 						//subscription will start today with a 1 period trial
 						$order->ProfileStartDate = date_i18n("Y-m-d") . "T0:0:0";
 						$order->TrialBillingPeriod = $order->BillingPeriod;
@@ -29,9 +24,7 @@
 						//add a billing cycle to make up for the trial, if applicable
 						if(!empty($order->TotalBillingCycles))
 							$order->TotalBillingCycles++;
-					}
-					elseif($order->InitialPayment == 0 && $order->TrialAmount == 0)
-					{
+					}	elseif($order->InitialPayment == 0 && $order->TrialAmount == 0)	{
 						//it has a trial, but the amount is the same as the initial payment, so we can squeeze it in there
 						$order->ProfileStartDate = date_i18n("Y-m-d") . "T0:0:0";														
 						$order->TrialBillingCycles++;
@@ -39,33 +32,24 @@
 						//add a billing cycle to make up for the trial, if applicable
 						if($order->TotalBillingCycles)
 							$order->TotalBillingCycles++;
-					}
-					else
-					{
+					} else	{
 						//add a period to the start date to account for the initial payment
 						$order->ProfileStartDate = date_i18n("Y-m-d", strtotime("+ " . $order->BillingFrequency . " " . $order->BillingPeriod, current_time("timestamp"))) . "T0:0:0";
 					}
 					
 					$order->ProfileStartDate = apply_filters("pmpro_profile_start_date", $order->ProfileStartDate, $order);
 					return $this->subscribe($order);
-				}
-				else
-				{
+				}else{
 					if(empty($order->error))
 						$order->error = __("Unknown error: Authorization failed.", 'paid-memberships-pro' );
 					return false;
 				}
-			}
-			else
-			{
+			} else	{
 				//charge first payment
-				if($this->charge($order))
-				{							
+				if($this->charge($order)) {							
 					//set up recurring billing					
-					if(pmpro_isLevelRecurring($order->membership_level))
-					{						
-						if(!pmpro_isLevelTrial($order->membership_level))
-						{
+					if(pmpro_isLevelRecurring($order->membership_level)){						
+						if(!pmpro_isLevelTrial($order->membership_level))	{
 							//subscription will start today with a 1 period trial
 							$order->ProfileStartDate = date_i18n("Y-m-d") . "T0:0:0";
 							$order->TrialBillingPeriod = $order->BillingPeriod;
@@ -76,9 +60,7 @@
 							//add a billing cycle to make up for the trial, if applicable
 							if(!empty($order->TotalBillingCycles))
 								$order->TotalBillingCycles++;
-						}
-						elseif($order->InitialPayment == 0 && $order->TrialAmount == 0)
-						{
+						} elseif($order->InitialPayment == 0 && $order->TrialAmount == 0) {
 							//it has a trial, but the amount is the same as the initial payment, so we can squeeze it in there
 							$order->ProfileStartDate = date_i18n("Y-m-d") . "T0:0:0";														
 							$order->TrialBillingCycles++;
@@ -86,27 +68,19 @@
 							//add a billing cycle to make up for the trial, if applicable
 							if(!empty($order->TotalBillingCycles))
 								$order->TotalBillingCycles++;
-						}
-						else
-						{
+						} else {
 							//add a period to the start date to account for the initial payment
 							$order->ProfileStartDate = date_i18n("Y-m-d", strtotime("+ " . $order->BillingFrequency . " " . $order->BillingPeriod, current_time("timestamp"))) . "T0:0:0";
 						}
 						
 						$order->ProfileStartDate = apply_filters("pmpro_profile_start_date", $order->ProfileStartDate, $order);
-						if($this->subscribe($order))
-						{
+						if($this->subscribe($order)){
 							return true;
-						}
-						else
-						{
-							if($this->void($order))
-							{
+						} else {
+							if($this->void($order))	{
 								if(!$order->error)
 									$order->error = __("Unknown error: Payment failed.", 'paid-memberships-pro' );
-							}
-							else
-							{
+							} else {
 								if(!$order->error)
 									$order->error = __("Unknown error: Payment failed.", 'paid-memberships-pro' );
 								
@@ -115,16 +89,12 @@
 							
 							return false;								
 						}
-					}
-					else
-					{
+					} else	{
 						//only a one time charge
 						$order->status = "success";	//saved on checkout page											
 						return true;
 					}
-				}
-				else
-				{
+				} else {
 					if(empty($order->error))
 						$order->error = __("Unknown error: Payment failed.", 'paid-memberships-pro' );
 					
@@ -133,8 +103,7 @@
 			}	
 		}
 		
-		function authorize(&$order)
-		{
+		function authorize(&$order)	{
 			//create a code for the order
 			if(empty($order->code))
 				$order->code = $order->getRandomCode();

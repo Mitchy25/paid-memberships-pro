@@ -376,86 +376,93 @@ function pmpro_loadTemplate( $page_name = null, $where = 'local', $type = 'pages
 
 function pmpro_getLevelCost( &$level, $tags = true, $short = false ) {
 	// initial payment
-	if ( ! $short ) {
-		$r = sprintf( __( 'The price for membership is <strong>%s</strong> now', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ) );
-	} else {
-		if ( pmpro_isLevelFree( $level ) ) {
-			$r = '<strong>' . __('Free', 'paid-memberships-pro' ) . '</strong>';
-		} else {
-			$r = sprintf( __( '<strong>%s</strong> now', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ) );
-		}
-	}
+	global $current_user;
+	$clevel = $current_user->membership_level;
 
-	// recurring part
-	if ( $level->billing_amount != '0.00' ) {
-		if ( $level->billing_limit > 1 ) {
-			if ( $level->cycle_number == '1' ) {
-				$r .= sprintf( __( ' and then <strong>%1$s per %2$s for %3$d more %4$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ), $level->billing_limit, pmpro_translate_billing_period( $level->cycle_period, $level->billing_limit ) );
-			} else {
-				$r .= sprintf( __( ' and then <strong>%1$s every %2$d %3$s for %4$d more payments</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ), $level->billing_limit );
-			}
-		} elseif ( $level->billing_limit == 1 ) {
-			$r .= sprintf( __( ' and then <strong>%1$s after %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
+	if (!$clevel){
+		if ( ! $short ) {
+			$r = sprintf( __( 'The price for %s\'s Membership is <strong>%s</strong> now', 'paid-memberships-pro' ),$level->name, pmpro_formatPrice( $level->initial_payment ) );
 		} else {
-			if ( $level->billing_amount === $level->initial_payment ) {
+			if ( pmpro_isLevelFree( $level ) ) {
+				$r = '<strong>' . __('Free', 'paid-memberships-pro' ) . '</strong>';
+			} else {
+				$r = sprintf( __( '<strong>%s</strong> now', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ) );
+			}
+		}
+
+		// recurring part
+		if ( $level->billing_amount != '0.00' ) {
+			if ( $level->billing_limit > 1 ) {
 				if ( $level->cycle_number == '1' ) {
-					if ( ! $short ) {
-						$r = sprintf( __( 'The price for membership is <strong>%1$s per %2$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), pmpro_translate_billing_period( $level->cycle_period ) );
+					$r .= sprintf( __( ' and then <strong>%1$s per %2$s for %3$d more %4$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ), $level->billing_limit, pmpro_translate_billing_period( $level->cycle_period, $level->billing_limit ) );
+				} else {
+					$r .= sprintf( __( ' and then <strong>%1$s every %2$d %3$s for %4$d more payments</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ), $level->billing_limit );
+				}
+			} elseif ( $level->billing_limit == 1 ) {
+				$r .= sprintf( __( ' and then <strong>%1$s after %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
+			} else {
+				if ( $level->billing_amount === $level->initial_payment ) {
+					if ( $level->cycle_number == '1' ) {
+						if ( ! $short ) {
+							$r = sprintf( __( 'The price for Coaches Membership is <strong>%1$s per %2$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), pmpro_translate_billing_period( $level->cycle_period ) );
+						} else {
+							$r = sprintf( __( '<strong>%1$s per %2$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), pmpro_translate_billing_period( $level->cycle_period ) );
+						}
 					} else {
-						$r = sprintf( __( '<strong>%1$s per %2$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), pmpro_translate_billing_period( $level->cycle_period ) );
+						if ( ! $short ) {
+							$r = sprintf( __( 'The price for Coaces Membership is <strong>%1$s every %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
+						} else {
+							$r = sprintf( __( '<strong>%1$s every %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
+						}
 					}
 				} else {
-					if ( ! $short ) {
-						$r = sprintf( __( 'The price for membership is <strong>%1$s every %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
+					if ( $level->cycle_number == '1' ) {
+						$r .= sprintf( __( ' and then <strong>%1$s per %2$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ) );
 					} else {
-						$r = sprintf( __( '<strong>%1$s every %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
+						$r .= sprintf( __( ' and then <strong>%1$s every %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
 					}
 				}
-			} else {
-				if ( $level->cycle_number == '1' ) {
-					$r .= sprintf( __( ' and then <strong>%1$s per %2$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ) );
+			}
+		} else {
+			$r .= '.';
+		}
+
+		// add a space
+		$r .= ' ';
+
+		// trial part
+		if ( $level->trial_limit ) {
+			if ( $level->trial_amount == '0.00' ) {
+				if ( $level->trial_limit == '1' ) {
+					$r .= ' ' . __( 'After your initial payment, your first payment is Free.', 'paid-memberships-pro' );
 				} else {
-					$r .= sprintf( __( ' and then <strong>%1$s every %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
+					$r .= ' ' . sprintf( __( 'After your initial payment, your first %d payments are Free.', 'paid-memberships-pro' ), $level->trial_limit );
+				}
+			} else {
+				if ( $level->trial_limit == '1' ) {
+					$r .= ' ' . sprintf( __( 'After your initial payment, your first payment will cost %s.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->trial_amount ) );
+				} else {
+					$r .= ' ' . sprintf( __( 'After your initial payment, your first %1$d payments will cost %2$s.', 'paid-memberships-pro' ), $level->trial_limit, pmpro_formatPrice( $level->trial_amount ) );
 				}
 			}
 		}
-	} else {
-		$r .= '.';
-	}
 
-	// add a space
-	$r .= ' ';
+		// taxes part
+		$tax_state = pmpro_getOption( 'tax_state' );
+		$tax_rate = pmpro_getOption( 'tax_rate' );
 
-	// trial part
-	if ( $level->trial_limit ) {
-		if ( $level->trial_amount == '0.00' ) {
-			if ( $level->trial_limit == '1' ) {
-				$r .= ' ' . __( 'After your initial payment, your first payment is Free.', 'paid-memberships-pro' );
-			} else {
-				$r .= ' ' . sprintf( __( 'After your initial payment, your first %d payments are Free.', 'paid-memberships-pro' ), $level->trial_limit );
-			}
-		} else {
-			if ( $level->trial_limit == '1' ) {
-				$r .= ' ' . sprintf( __( 'After your initial payment, your first payment will cost %s.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->trial_amount ) );
-			} else {
-				$r .= ' ' . sprintf( __( 'After your initial payment, your first %1$d payments will cost %2$s.', 'paid-memberships-pro' ), $level->trial_limit, pmpro_formatPrice( $level->trial_amount ) );
-			}
+		if ( $tax_state && $tax_rate && ! pmpro_isLevelFree( $level ) ) {
+			$r .= sprintf( __( 'Customers in %1$s will be charged %2$s%% tax.', 'paid-memberships-pro' ), $tax_state, round( $tax_rate * 100, 2 ) );
 		}
+
+		if ( ! $tags ) {
+			$r = strip_tags( $r );
+		}
+
+		$r = apply_filters( 'pmpro_level_cost_text', $r, $level, $tags, $short ); // passing $tags and $short since v1.8
+	} else {
+		$r = "";
 	}
-
-	// taxes part
-	$tax_state = pmpro_getOption( 'tax_state' );
-	$tax_rate = pmpro_getOption( 'tax_rate' );
-
-	if ( $tax_state && $tax_rate && ! pmpro_isLevelFree( $level ) ) {
-		$r .= sprintf( __( 'Customers in %1$s will be charged %2$s%% tax.', 'paid-memberships-pro' ), $tax_state, round( $tax_rate * 100, 2 ) );
-	}
-
-	if ( ! $tags ) {
-		$r = strip_tags( $r );
-	}
-
-	$r = apply_filters( 'pmpro_level_cost_text', $r, $level, $tags, $short ); // passing $tags and $short since v1.8
 	return $r;
 }
 
@@ -493,7 +500,7 @@ function pmpro_getLevelsCost( &$levels, $tags = true, $short = false ) {
 
 	// initial payment
 	if ( ! $short ) {
-		$r = sprintf( __( 'The price for membership is <strong>%s</strong> now', 'paid-memberships-pro' ), pmpro_formatPrice( $initpmt ) );
+		$r = sprintf( __( 'The price for Coaches Membership is <strong>%s</strong> now', 'paid-memberships-pro' ), pmpro_formatPrice( $initpmt ) );
 	} else {
 		$r = sprintf( __( '<strong>%s</strong> now', 'paid-memberships-pro' ), pmpro_formatPrice( $initpmt ) );
 	}
@@ -1647,7 +1654,7 @@ function pmpro_getDiscountCode( $seed = null ) {
 }
 
 // is a discount code valid - level_id could be a scalar or an array (or unset)
-function pmpro_checkDiscountCode( $code, $level_id = null, $return_errors = false ) {
+function pmpro_checkDiscountCode( $code, $level_id = null, $return_errors = false, $validateType = false, $type = null) {
 	global $wpdb;
 
 	$error = false;
@@ -1715,6 +1722,20 @@ function pmpro_checkDiscountCode( $code, $level_id = null, $return_errors = fals
 
 			if ( empty( $code_level ) ) {
 				$error = __( 'This discount code does not apply to this membership level.', 'paid-memberships-pro' );
+			}
+		}
+	}
+
+	if ( ! $error ) {
+		if ($validateType == true){
+			if ($type == "affiliate"){
+				if (substr($code,0,7) != "PBC-Ref"){
+					$error = __( 'This looks like a discount code, not an Affiliate Code. Try placing this in the Discount Code box', 'paid-memberships-pro' );
+				}
+			} elseif ($type == "discount"){
+				if (substr($code,0,7) == "PBC-Ref"){
+					$error = __( 'This looks like an Affiliate code, not a discount code. Try placing this in the Affiliate Code box', 'paid-memberships-pro' );
+				}
 			}
 		}
 	}
@@ -3227,7 +3248,7 @@ function pmpro_show_discount_code() {
 			$show = false;
 		}
 	}
-	
+	// $show = false;
 	$show = apply_filters( "pmpro_show_discount_code", $show );
 	
 	return $show;
@@ -3262,7 +3283,7 @@ function pmpro_show_discount_code() {
   * @return mixed $order Order object.
   */
  function pmpro_build_order_for_checkout() {    
-	global $post, $gateway, $wpdb, $besecure, $discount_code, $discount_code_id, $pmpro_level, $pmpro_levels, $pmpro_msg, $pmpro_msgt, $pmpro_review, $skip_account_fields, $pmpro_paypal_token, $pmpro_show_discount_code, $pmpro_error_fields, $pmpro_required_billing_fields, $pmpro_required_user_fields, $wp_version, $current_user, $pmpro_requirebilling, $tospage, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth, $ExpirationYear, $pmpro_states, $recaptcha, $recaptcha_privatekey, $CVV;
+	global $affiliate_code, $post, $gateway, $wpdb, $besecure, $discount_code, $discount_code_id, $pmpro_level, $pmpro_levels, $pmpro_msg, $pmpro_msgt, $pmpro_review, $skip_account_fields, $pmpro_paypal_token, $pmpro_show_discount_code, $pmpro_error_fields, $pmpro_required_billing_fields, $pmpro_required_user_fields, $wp_version, $current_user, $pmpro_requirebilling, $tospage, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth, $ExpirationYear, $pmpro_states, $recaptcha, $recaptcha_privatekey, $CVV;
 	
 	$morder                   = new MemberOrder();
 	$morder->membership_id    = $pmpro_level->id;
@@ -3291,7 +3312,15 @@ function pmpro_show_discount_code() {
 	$morder->ExpirationDate        = $ExpirationMonth . $ExpirationYear;
 	$morder->ExpirationDate_YdashM = $ExpirationYear . "-" . $ExpirationMonth;
 	$morder->CVV2                  = $CVV;
-	
+
+	if (!$affiliate_code && $current_user->ID){
+		$affiliate_code = get_user_meta($current_user->ID,"affiliateCode")[0];
+	}
+
+	$morder->affiliate_id          = $affiliate_code;
+
+
+
 	// Not saving email in order table, but the sites need it.
 	$morder->Email = $bemail;
 	

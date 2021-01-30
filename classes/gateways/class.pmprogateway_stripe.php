@@ -2298,6 +2298,9 @@ class PMProGateway_stripe extends PMProGateway {
 		$update_order->ProfileStartDate = date_i18n( "Y-m-d", $end_timestamp );
 		$update_order->BillingPeriod    = $update['cycle_period'];
 		$update_order->BillingFrequency = $update['cycle_number'];
+		$update_order->newSeats			= $update['newSeats'];
+		$update_order->oldSeats			= $update['oldSeats'];
+		$update_order->additionalSeats	= $update['additionalSeats'];
 		$update_order->getMembershipLevel();
 
 		//need filter to reset ProfileStartDate
@@ -2887,15 +2890,16 @@ class PMProGateway_stripe extends PMProGateway {
 			$currency_unit_multiplier = 1;
 		}
 
+		
 		/*
 		Figure out the trial length (first payment handled by initial charge)
-        
+		
 		There are two parts to the trial. Part 1 is simply the delay until the first payment
-        since we are doing the first payment as a separate transaction.
-        The second part is the actual "trial" set by the admin.
+		since we are doing the first payment as a separate transaction.
+		The second part is the actual "trial" set by the admin.
 
-        Stripe only supports Year or Month for billing periods, but we account for Days and Weeks just in case.
-        */
+		Stripe only supports Year or Month for billing periods, but we account for Days and Weeks just in case.
+		*/
 		if ( $order->BillingPeriod == "Year" ) {
 			$trial_period_days = $order->BillingFrequency * 365;    //annual
 		} elseif ( $order->BillingPeriod == "Day" ) {
@@ -2931,8 +2935,43 @@ class PMProGateway_stripe extends PMProGateway {
 
 		}
 
+		global $current_user;
+
+		//get current plan at Stripe to get payment date
+		$last_order = new MemberOrder();
+		$last_order->getLastMemberOrder($current_user->ID);
+		$last_order->setGateway( 'stripe' );
+		$last_order->Gateway->getCustomer( $last_order );
+
+		$subscription = $last_order->Gateway->getSubscription( $last_order );
+
+		if (!empty($subscription)) {
+			$end_timestamp = $subscription->current_period_end;
+			$orderStartDate = date_i18n( "Y-m-d", $end_timestamp). "T0:0:0";
+			
+			//convert back to days
+			$trial_period_days = ceil( abs( strtotime( date_i18n( "Y-m-d" ), current_time( "timestamp" ) ) - strtotime( $orderStartDate, current_time( "timestamp" ) ) ) / 86400 );
+
+		}
+		
 		// Save $trial_period_days to order for now too.
 		$order->TrialPeriodDays = $trial_period_days;
+		$seatHash = $order->seat_hash;
+
+		if ($order->newSeats){
+			$seatHash = uniqid('PBCSeatOrder_', true );
+			$order->seat_hash = $seatHash;
+			$seatString = " - Seats [Original/New/Current] [" . $order->oldSeats . "/" . $order->additionalSeats . "/" . $order->newSeats ."]";
+		} elseif ($seatHash){
+			//Get Seat Details
+			$seatArray = get_option($seatHash);
+			$currentSeats = $seatArray['currentSeats'];
+			$originalSeats = $seatArray['originalSeats'];
+			$newSeats = $seatArray['newSeats'];
+			$seatString = " - Seats [Original/New/Current] [" . $originalSeats . "/" . $newSeats . "/" . $currentSeats ."]";
+		} else {
+			$seatString = " - Membership Only";
+		}
 
 		//create a plan
 		try {
@@ -2941,7 +2980,7 @@ class PMProGateway_stripe extends PMProGateway {
 				"interval_count"    => $order->BillingFrequency,
 				"interval"          => strtolower( $order->BillingPeriod ),
 				"trial_period_days" => $trial_period_days,
-				'product'           => array( 'name' => $order->membership_name . " for order " . $order->code ),
+				'product'           => array( 'name' => "Order " . $order->code . $seatString),
 				"currency"          => strtolower( $pmpro_currency ),
 				"id"                => $order->code
 			);

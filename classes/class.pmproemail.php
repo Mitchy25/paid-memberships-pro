@@ -6,8 +6,7 @@
 			$this->email = $this->from = $this->fromname = $this->subject = $this->template = $this->data = $this->body = NULL;
 		}					
 		
-		function sendEmail($email = NULL, $from = NULL, $fromname = NULL, $subject = NULL, $template = NULL, $data = NULL)
-		{
+		function sendEmail($email = NULL, $from = NULL, $fromname = NULL, $subject = NULL, $template = NULL, $data = NULL)	{
 			//if values were passed
 			if($email)
 				$this->email = $email;
@@ -49,30 +48,31 @@
 			//load the template			
 			$locale = apply_filters("plugin_locale", get_locale(), "paid-memberships-pro");
 
-			if(file_exists(get_stylesheet_directory() . "/paid-memberships-pro/email/" . $locale . "/" . $this->template . ".html"))
-				$this->body = file_get_contents(get_stylesheet_directory() . "/paid-memberships-pro/email/" . $locale . "/" . $this->template . ".html");	//localized email folder in child theme
-			elseif(file_exists(get_stylesheet_directory() . "/paid-memberships-pro/email/" . $this->template . ".html"))
-				$this->body = file_get_contents(get_stylesheet_directory() . "/paid-memberships-pro/email/" . $this->template . ".html");	//email folder in child theme
-			elseif(file_exists(get_stylesheet_directory() . "/membership-email-" . $this->template . ".html"))
+			if(file_exists(get_stylesheet_directory() . "/paid-memberships-pro-pbc/email/" . $locale . "/" . $this->template . ".html")){
+				$this->body = file_get_contents(get_stylesheet_directory() . "/paid-memberships-pro-pbc/email/" . $locale . "/" . $this->template . ".html");	//localized email folder in child theme
+			} elseif(file_exists(get_stylesheet_directory() . "/paid-memberships-pro-pbc/email/" . $this->template . ".html")) {
+				$this->body = file_get_contents(get_stylesheet_directory() . "/paid-memberships-pro-pbc/email/" . $this->template . ".html");	//email folder in child theme
+			} elseif(file_exists(get_stylesheet_directory() . "/membership-email-" . $this->template . ".html")) {
 				$this->body = file_get_contents(get_stylesheet_directory() . "/membership-email-" . $this->template . ".html");			//membership-email- file in child theme
-			elseif(file_exists(get_template_directory() . "/paid-memberships-pro/email/" . $locale . "/" . $this->template . ".html"))	
+			} elseif(file_exists(get_template_directory() . "/paid-memberships-pro-pbc/email/" . $locale . "/" . $this->template . ".html"))  {
 				$this->body = file_get_contents(get_template_directory() . "/paid-memberships-pro/email/" . $locale . "/" . $this->template . ".html");	//localized email folder in parent theme
-			elseif(file_exists(get_template_directory() . "/paid-memberships-pro/email/" . $this->template . ".html"))
-				$this->body = file_get_contents(get_template_directory() . "/paid-memberships-pro/email/" . $this->template . ".html");	//email folder in parent theme
-			elseif(file_exists(get_template_directory() . "/membership-email-" . $this->template . ".html"))
+			} elseif(file_exists(get_template_directory() . "/paid-memberships-pro-pbc/email/" . $this->template . ".html")) {
+				$this->body = file_get_contents(get_template_directory() . "/paid-memberships-pro-pbc/email/" . $this->template . ".html");	//email folder in parent theme
+			} elseif(file_exists(get_template_directory() . "/membership-email-" . $this->template . ".html")) {
 				$this->body = file_get_contents(get_template_directory() . "/membership-email-" . $this->template . ".html");			//membership-email- file in parent theme			
-			elseif(file_exists(WP_LANG_DIR . '/pmpro/email/' . $locale . "/" . $this->template . ".html"))
+			} elseif(file_exists(WP_LANG_DIR . '/pmpro/email/' . $locale . "/" . $this->template . ".html")) {
 				$this->body = file_get_contents(WP_LANG_DIR . '/pmpro/email/' . $locale . "/" . $this->template . ".html");				//localized email folder in WP language folder
-			elseif(file_exists(WP_LANG_DIR . '/pmpro/email/' . $this->template . ".html"))
+			} elseif(file_exists(WP_LANG_DIR . '/pmpro/email/' . $this->template . ".html")) {
 				$this->body = file_get_contents(WP_LANG_DIR . '/pmpro/email/' . $this->template . ".html");								//email folder in WP language folder
-			elseif(file_exists(PMPRO_DIR . "/languages/email/" . $locale . "/" . $this->template . ".html"))
+			} elseif(file_exists(PMPRO_DIR . "/languages/email/" . $locale . "/" . $this->template . ".html")) {
 				$this->body = file_get_contents(PMPRO_DIR . "/languages/email/" . $locale . "/" . $this->template . ".html");					//email folder in PMPro language folder
-			elseif($this->getDefaultEmailTemplate($this->template))
+			} elseif($this->getDefaultEmailTemplate($this->template)) {
 				$this->body = $this->getDefaultEmailTemplate($this->template);
-			elseif(file_exists(PMPRO_DIR . "/email/" . $this->template . ".html"))
+			} elseif(file_exists(PMPRO_DIR . "/email/" . $this->template . ".html")) {
 				$this->body = file_get_contents(PMPRO_DIR . "/email/" . $this->template . ".html");										//default template in plugin
-			elseif(!empty($this->data) && !empty($this->data['body']))
+			} elseif(!empty($this->data) && !empty($this->data['body'])) {
 				$this->body = $this->data['body'];																						//data passed in
+			}
 
 			//header and footer
 			/* This is handled for all emails via the pmpro_send_html function in paid-memberships-pro now
@@ -234,8 +234,8 @@
 			return $this->sendEmail();
 		}
 		
-		function sendCheckoutEmail($user = NULL, $invoice = NULL)
-		{
+		function sendCheckoutEmail($user = NULL, $invoice = NULL){
+
 			global $wpdb, $current_user;
 			if(!$user)
 				$user = $current_user;
@@ -268,20 +268,34 @@
 								"display_name" => $user->display_name,
 								"user_email" => $user->user_email,								
 							);						
-						
-			if(!empty($invoice) && !pmpro_isLevelFree($user->membership_level))
-			{									
+			if(!empty($invoice) && !pmpro_isLevelFree($user->membership_level))	{						
 				if($invoice->gateway == "paypalexpress")
 					$this->template = "checkout_express";
-				elseif($invoice->gateway == "check")
-				{
+				elseif($invoice->gateway == "check"){
 					$this->template = "checkout_check";
 					$this->data["instructions"] = wpautop(pmpro_getOption("instructions"));
-				}
-				elseif(pmpro_isLevelTrial($user->membership_level))
+				} elseif(pmpro_isLevelTrial($user->membership_level)){
 					$this->template = "checkout_trial";
-				else
+				} elseif (substr($invoice->notes,0,13) == "PBCSeatOrder_" && $invoice->total > 0) {
+					//Adding Seats
+					$this->template = "checkout_paid_add_seats";
+					$seatArray = get_option($seatHash);
+					$currentSeats = $seatArray['currentSeats'];
+					$originalSeats = $seatArray['originalSeats'];
+					$newSeats = $seatArray['newSeats'];
+					$this->data['newSeats'] = $currentSeats;
+					$this->data['oldSeats'] = $originalSeats;
+					$this->data['additionalSeats'] = $newSeats;
+				} elseif (substr($invoice->notes,0,13) == "PBCSeatOrder_" && $invoice->total == 0){
+					//Removing Seats
+					$this->template = "checkout_paid_remove_seats";
+					$this->data['newSeats'] = $invoice->newSeats;
+					$this->data['oldSeats'] = $invoice->oldSeats;
+					$this->data['additionalSeats'] = $invoice->additionalSeats;
+				} else {
 					$this->template = "checkout_paid";
+				}
+					
 
 				//BUG: Didn't apply template filter before it was being used in sendEmail()
 				$this->template = apply_filters("pmpro_email_template", $this->template, $this);
@@ -313,24 +327,21 @@
 					$this->data["discount_code"] = "<p>" . __("Discount Code", 'paid-memberships-pro' ) . ": " . $invoice->discount_code->code . "</p>\n";
 				else
 					$this->data["discount_code"] = "";
-			}
-			elseif(pmpro_isLevelFree($user->membership_level))
-			{
+			}	elseif(pmpro_isLevelFree($user->membership_level))	{
 				$this->template = "checkout_free";		
 				global $discount_code;
 				if(!empty($discount_code))
 					$this->data["discount_code"] = "<p>" . __("Discount Code", 'paid-memberships-pro' ) . ": " . $discount_code . "</p>\n";		
 				else
 					$this->data["discount_code"] = "";		
-			}						
-			else
-			{
+			} else	{
 				$this->template = "checkout_freetrial";
 				global $discount_code;
-				if(!empty($discount_code))
+				if(!empty($discount_code)){
 					$this->data["discount_code"] = "<p>" . __("Discount Code", 'paid-memberships-pro' ) . ": " . $discount_code . "</p>\n";		
-				else
+				} else {
 					$this->data["discount_code"] = "";	
+				}
 			}
 			
 			$enddate = $wpdb->get_var("SELECT UNIX_TIMESTAMP(CONVERT_TZ(enddate, '+00:00', @@global.time_zone)) FROM $wpdb->pmpro_memberships_users WHERE user_id = '" . $user->ID . "' AND status = 'active' LIMIT 1");

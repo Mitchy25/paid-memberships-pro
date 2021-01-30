@@ -1,5 +1,5 @@
 jQuery(document).ready(function(){ 
-    // Discount code JS if we are showing discount codes.
+	// Discount code JS if we are showing discount codes.
     if ( pmpro.show_discount_code ) {
         //update discount code link to show field at top of form
         jQuery('#other_discount_code_a').attr('href', 'javascript:void(0);');
@@ -41,7 +41,7 @@ jQuery(document).ready(function(){
                 jQuery.ajax({
                     url: pmpro.ajaxurl, type:'GET',timeout: pmpro.ajax_timeout,
                     dataType: 'html',
-                    data: "action=applydiscountcode&code=" + code + "&level=" + level_id + "&msgfield=pmpro_message",
+                    data: "action=applydiscountcode&discount_code=" + code + "&level=" + level_id + "&msgfield=pmpro_message&validateType=true&type=discount",
                     error: function(xml){
                         alert('Error applying discount code [1]');
 
@@ -81,7 +81,7 @@ jQuery(document).ready(function(){
 				jQuery.ajax({
 					url: pmpro.ajaxurl,type:'GET',timeout: pmpro.ajax_timeout,
 					dataType: 'html',
-					data: "action=applydiscountcode&code=" + code + "&level=" + level_id + "&msgfield=discount_code_message",
+					data: "action=applydiscountcode&discount_code=" + code + "&level=" + level_id + "&msgfield=discount_code_message&validateType=true&type=discount",
 					error: function(xml){
 						alert('Error applying discount code [1]');
 
@@ -104,7 +104,114 @@ jQuery(document).ready(function(){
 				});
 			}
 		});
+	}
+	
+
+	//Affiliate Code
+
+	if ( pmpro.show_discount_code ) {
+        //update affiliate code link to show field at top of form
+        jQuery('#other_affiliate_code_a').attr('href', 'javascript:void(0);');
+        jQuery('#other_affiliate_code_a').click(function() {
+            jQuery('#other_affiliate_code_tr').show();
+            jQuery('#other_affiliate_code_p').hide();
+            jQuery('#other_affiliate_code').focus();
+        });
+
+        //update real discount code field as the other discount code field is updated
+        jQuery('#other_affiliate_code').keyup(function() {
+            jQuery('#affiliate_code').val(jQuery('#other_affiliate_code').val());
+        });
+        jQuery('#other_affiliate_code').blur(function() {
+            jQuery('#affiliate_code').val(jQuery('#other_affiliate_code').val());
+        });
+
+        //update other discount code field as the real discount code field is updated
+        jQuery('#affiliate_code').keyup(function() {
+            jQuery('#other_affiliate_code').val(jQuery('#affiliate_code').val());
+        });
+        jQuery('#affiliate_code').blur(function() {
+            jQuery('#other_affiliate_code').val(jQuery('#affiliate_code').val());
+        });
+
+        // Top discount code field click handler.
+        jQuery('#other_affiliate_code_button').click(function() {
+            var code = jQuery('#other_affiliate_code').val();
+            var level_id = jQuery('#level').val();
+
+            if(code)  {
+                //hide any previous message
+                jQuery('.pmpro_discount_code_msg').hide();
+
+                //disable the apply button
+                jQuery('#other_affiliate_code_button').attr('disabled', 'disabled');
+
+                jQuery.ajax({
+                    url: pmpro.ajaxurl, type:'GET',timeout: pmpro.ajax_timeout,
+                    dataType: 'html',
+                    data: "action=applydiscountcode&affiliate_code=" + code + "&level=" + level_id + "&msgfield=pmpro_message&validateType=true&type=affiliate",
+                    error: function(xml){
+                        alert('Error applying discount code [1]');
+
+                        //enable apply button
+                        jQuery('#other_affiliate_code_button').removeAttr('disabled');
+                    },
+                    success: function(responseHTML){
+                        if (responseHTML == 'error') {
+                            alert('Error applying discount code [2]');
+                        } else {
+                            jQuery('#pmpro_message').html(responseHTML);
+                        }
+
+                        //enable invite button
+                        jQuery('#other_affiliate_code_button').removeAttr('disabled');
+                    }
+                });
+            }
+        });
+		
+		// Bottom discount code field click handler.
+		jQuery('#affiliate_code_button').click(function() {
+			var code = jQuery('#affiliate_code').val();
+			var level_id = jQuery('#level').val();
+
+			if(code)
+			{
+				//hide any previous message
+				jQuery('.pmpro_discount_code_msg').hide();
+
+				//disable the apply button
+				jQuery('#affiliate_code_button').attr('disabled', 'disabled');
+
+				jQuery.ajax({
+					url: pmpro.ajaxurl,type:'GET',
+					timeout: pmpro.ajax_timeout,
+					dataType: 'html',
+					data: "action=applydiscountcode&affiliate_code=" + code + "&level=" + level_id + "&msgfield=discount_code_message&validateType=true&type=affiliate",
+					error: function(xml){
+						alert('Error applying discount code [1]');
+
+						//enable apply button
+						jQuery('#affiliate_code_button').removeAttr('disabled');
+					},
+					success: function(responseHTML){
+						if (responseHTML == 'error')
+						{
+							alert('Error applying discount code [2]');
+						}
+						else
+						{
+							jQuery('#discount_code_message').html(responseHTML);
+						}
+
+						//enable invite button
+						jQuery('#affiliate_code_button').removeAttr('disabled');
+					}
+				});
+			}
+		});
     }
+
 	
 	// Validate credit card number and determine card type.
 	if ( typeof jQuery('#AccountNumber').validateCreditCard == 'function' ) {
@@ -163,11 +270,25 @@ jQuery(document).ready(function(){
 		});
 	}
 
+	if( pmpro.affiliate_code_passed_in ) {
+		jQuery('#affiliate_code_button').hide();
+		jQuery('#affiliate_code').bind('change keyup', function() {
+			jQuery('#affiliate_code_button').show();
+		});
+	}
+
 	//click apply button on enter in *other* discount code box
 	jQuery('#other_discount_code').keydown(function (e){
 	    if(e.keyCode == 13){
 		   e.preventDefault();
 		   jQuery('#other_discount_code_button').click();
+	    }
+	});
+
+	jQuery('#other_affiliate_code').keydown(function (e){
+	    if(e.keyCode == 13){
+		   e.preventDefault();
+		   jQuery('#other_affiliate_code_button').click();
 	    }
 	});
 	

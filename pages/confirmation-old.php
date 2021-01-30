@@ -2,38 +2,22 @@
 <?php
 	global $wpdb, $current_user, $pmpro_invoice, $pmpro_msg, $pmpro_msgt;
 
-	if($pmpro_msg){
+	if($pmpro_msg)
+	{
 	?>
 		<div class="<?php echo pmpro_get_element_class( 'pmpro_message ' . $pmpro_msgt, $pmpro_msgt ); ?>"><?php echo wp_kses_post( $pmpro_msg );?></div>
 	<?php
 	}
 
-	if(empty($current_user->membership_level)){
+	if(empty($current_user->membership_level))
 		$confirmation_message = "<p>" . __('Your payment has been submitted. Your membership will be activated shortly.', 'paid-memberships-pro' ) . "</p>";
-	} else {
-		//Seat Check
-		if (isset($_REQUEST['seats'])){
-			$seats = $_REQUEST['seats'];
-			$originalSeats = $_REQUEST['originalSeats'];
-			$newSeats = intval($seats) - intval($originalSeats);
-			if ($originalSeats == 0){
-				//First Seat Checkout
-				$confirmation_message = "<p>" . sprintf(__('Thank you for purchasing %s client licences to %s. Below is a receipt for your purchase today.', 'paid-memberships-pro' ), $seats, get_bloginfo("name")) . "</p>";
-			} else {
-				//Additional Seat Checkout
-				$confirmation_message = "<p>" . sprintf(__('Thank you for purchasing an additional %s client licences to %s. You now have a total of %s client licenses. Below is a receipt for your purchase today.', 'paid-memberships-pro' ),$newSeats, get_bloginfo("name"), $seats) . "</p>";
-			}
-			
-		} else {
-			$confirmation_message = "<p>" . sprintf(__('Thank you for your membership to %s. Your %s membership is now active.', 'paid-memberships-pro' ), get_bloginfo("name"), $current_user->membership_level->name) . "</p>";
-		}
-		
-	}
+	else
+		$confirmation_message = "<p>" . sprintf(__('Thank you for your membership to %s. Your %s membership is now active.', 'paid-memberships-pro' ), get_bloginfo("name"), $current_user->membership_level->name) . "</p>";
+
 	//confirmation message for this level
 	$level_message = $wpdb->get_var("SELECT l.confirmation FROM $wpdb->pmpro_membership_levels l LEFT JOIN $wpdb->pmpro_memberships_users mu ON l.id = mu.membership_id WHERE mu.status = 'active' AND mu.user_id = '" . $current_user->ID . "' LIMIT 1");
-	if(!empty($level_message)){
+	if(!empty($level_message))
 		$confirmation_message .= "\n" . stripslashes($level_message) . "\n";
-	}
 ?>
 
 <?php if(!empty($pmpro_invoice) && !empty($pmpro_invoice->id)) { ?>
@@ -42,7 +26,7 @@
 		$pmpro_invoice->getUser();
 		$pmpro_invoice->getMembershipLevel();
 
-		$confirmation_message .= "<p>" . sprintf(__('Below are details about your account and a receipt for your initial invoice. A welcome email with a copy of your initial invoice has been sent to %s.', 'paid-memberships-pro' ), $pmpro_invoice->user->user_email) . "</p>";
+		$confirmation_message .= "<p>" . sprintf(__('Below are details about your membership account and a receipt for your initial membership invoice. A welcome email with a copy of your initial membership invoice has been sent to %s.', 'paid-memberships-pro' ), $pmpro_invoice->user->user_email) . "</p>";
 
 		// Check instructions
 		if ( $pmpro_invoice->gateway == "check" && ! pmpro_isLevelFree( $pmpro_invoice->membership_level ) ) {
@@ -72,9 +56,6 @@
 		<?php } ?>
 		<?php if($pmpro_invoice->getDiscountCode()) { ?>
 			<li><strong><?php _e('Discount Code', 'paid-memberships-pro' );?>:</strong> <?php echo esc_html( $pmpro_invoice->discount_code->code );?></li>
-		<?php } ?>
-		<?php if($pmpro_invoice->getAffiliateCode()) { ?>
-			<li><strong><?php _e('Affiliate Code', 'paid-memberships-pro' );?>:</strong> <?php echo esc_html( $pmpro_invoice->affiliate_id );?></li>
 		<?php } ?>
 		<?php do_action("pmpro_invoice_bullets_bottom", $pmpro_invoice); ?>
 	</ul>
@@ -156,46 +137,3 @@
 	<?php } ?>
 </p> <!-- end pmpro_actions_nav -->
 </div> <!-- end pmpro_confirmation_wrap -->
-<script>
-
-jQuery(document).ready(function(){
-	jQuery('#coachReferralLink').click(function(){
-		var copyText = jQuery(this).attr('data-referrallink');
-		var textarea = document.createElement("textarea");
-		textarea.textContent = copyText;
-		textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in MS Edge.
-		document.body.appendChild(textarea);
-		textarea.select();
-		document.execCommand("copy"); 
-		document.body.removeChild(textarea);
-
-		/* Alert the copied text */
-		jQuery(this).text('Copied!')
-
-		setTimeout(function(){
-			jQuery('#coachReferralLink').text('Copy')
-		}, 1500)
-	})
-	jQuery('#clientReferralLink').click(function(){
-		var copyText = jQuery(this).attr('data-referrallink');
-		var textarea = document.createElement("textarea");
-		textarea.textContent = copyText;
-		textarea.style.position = "fixed"; // Prevent scrolling to bottom of page in MS Edge.
-		document.body.appendChild(textarea);
-		textarea.select();
-		document.execCommand("copy"); 
-		document.body.removeChild(textarea);
-
-		/* Alert the copied text */
-		jQuery(this).text('Copied!')
-
-		setTimeout(function(){
-			jQuery('#clientReferralLink').text('Copy')
-		}, 1500)
-	})
-
-	
-})
-
-
-</script>
