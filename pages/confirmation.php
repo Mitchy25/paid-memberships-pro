@@ -74,7 +74,7 @@
 			<li><strong><?php _e('Discount Code', 'paid-memberships-pro' );?>:</strong> <?php echo esc_html( $pmpro_invoice->discount_code->code );?></li>
 		<?php } ?>
 		<?php if($pmpro_invoice->getAffiliateCode()) { ?>
-			<li><strong><?php _e('Affiliate Code', 'paid-memberships-pro' );?>:</strong> <?php echo esc_html( $pmpro_invoice->affiliate_id->code );?></li>
+			<li><strong><?php _e('Affiliate Code', 'paid-memberships-pro' );?>:</strong> <?php echo esc_html( $pmpro_invoice->affiliate_id );?></li>
 		<?php } ?>
 		<?php do_action("pmpro_invoice_bullets_bottom", $pmpro_invoice); ?>
 	</ul>

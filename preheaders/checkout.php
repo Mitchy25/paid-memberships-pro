@@ -685,8 +685,26 @@ if ( ! empty( $pmpro_confirmed ) ) {
 				$morder->user_id       = $user_id;
 				$morder->membership_id = $pmpro_level->id;  
 				
+				//Add Seat Hash
+				if ($seats){
+					// $newSeats = $number_of_seats - $originalSeats;
+					$morder->seat_hash = uniqid('PBCSeatOrder_', true );
+					add_option($morder->seat_hash, array('currentSeats'=>$seats, 'originalSeats'=>$originalSeats, 'newSeats'=>$newSeats));
+				}
+
 				//Add Affiliate ID after User ID is available
 				add_user_meta($user_id,"affiliateCode",$morder->affiliate_id);
+				//add affiliate code use (If first time only)
+				if ($morder->affiliate_id) {
+					//Get Affilidate Code ID
+					$affiliate_code_id = $wpdb->get_var( "SELECT id FROM $wpdb->pmpro_discount_codes WHERE code = '" . esc_sql( $morder->affiliate_id ) . "' LIMIT 1" );
+					if ( ! empty( $morder->id ) ) {
+						$code_order_id = $morder->id;
+					} else {
+						$code_order_id = "";
+					}
+					$wpdb->query( "INSERT INTO $wpdb->pmpro_discount_codes_uses (code_id, user_id, order_id, timestamp) VALUES('" . $affiliate_code_id . "', '" . $user_id . "', '" . intval( $code_order_id ) . "', '" . current_time( "mysql" ) . "')" );
+				}
 				$morder->saveOrder();
 			}
 
@@ -764,7 +782,7 @@ if ( ! empty( $pmpro_confirmed ) ) {
 			do_action( "pmpro_after_checkout", $user_id, $morder );    //added $morder param in v2.0
 
 			$sendemails = apply_filters( "pmpro_send_checkout_emails", true);
-	
+
 			if($sendemails) { // Send the emails only if the flag is set to true
 
 				//setup some values for the emails

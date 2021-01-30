@@ -70,8 +70,7 @@
 		/**
 		 * Retrieve a member order from the DB by ID
 		 */
-		function getMemberOrderByID($id)
-		{
+		function getMemberOrderByID($id)	{
 			global $wpdb;
 
 			if(!$id)
@@ -79,8 +78,7 @@
 
 			$dbobj = $wpdb->get_row("SELECT * FROM $wpdb->pmpro_membership_orders WHERE id = '$id' LIMIT 1");
 
-			if($dbobj)
-			{
+			if($dbobj){
 				$this->id = $dbobj->id;
 				$this->code = $dbobj->code;
 				$this->session_id = $dbobj->session_id;
@@ -139,6 +137,7 @@
 				$this->affiliate_subid = $dbobj->affiliate_subid;
 
 				$this->notes = $dbobj->notes;
+				$this->seat_hash = $dbobj->notes;
 				$this->checkout_id = $dbobj->checkout_id;
 
 				//reset the gateway
@@ -356,17 +355,19 @@
 
 			global $wpdb;
 			$sql = $wpdb->get_row("SELECT dc.* FROM $wpdb->pmpro_discount_codes dc LEFT JOIN $wpdb->pmpro_discount_codes_uses dcu ON dc.id = dcu.code_id WHERE dcu.order_id = '" . $this->id . "' LIMIT 1");
-			if (substr($sql->code,7) == "PBC-Ref"){
-				$this->affiliate_id = $sql;
+			if (isset($sql->code)){
+				if (substr($sql->code,7) == "PBC-Ref"){
+					$this->affiliate_id = $sql;
+				} else {
+					return false;
+				}
 			} else {
-				$this->affiliate_id = null;
+				return false;
 			}
 
 			//filter @since v1.7.14
 			$this->affiliate_id = apply_filters("pmpro_order_discount_code", $this->affiliate_id, $this);
 			
-			
-
 			return $this->affiliate_id;
 		}
 
@@ -383,16 +384,21 @@
 
 			global $wpdb;
 			$sql = $wpdb->get_row("SELECT dc.* FROM $wpdb->pmpro_discount_codes dc LEFT JOIN $wpdb->pmpro_discount_codes_uses dcu ON dc.id = dcu.code_id WHERE dcu.order_id = '" . $this->id . "' LIMIT 1");
-			if (substr($sql->code,7) == "PBC-Ref"){
-				$this->discount_code = null;
+			if (isset($sql->code)){
+				if (substr($sql->code,7) == "PBC-Ref"){
+					return false;
+				} else {
+					$this->discount_code = $sql;
+				}
 			} else {
-				$this->discount_code = $sql;
+				return false;
 			}
-
+			
 			//filter @since v1.7.14
 			$this->discount_code = apply_filters("pmpro_order_discount_code", $this->discount_code, $this);
 
 			return $this->discount_code;
+						
 		}
 
 		/**
@@ -685,8 +691,7 @@
 			}			
 			
 			//these fix some warnings/notices
-			if(empty($this->billing))
-			{
+			if(empty($this->billing)){
 				$this->billing = new stdClass();
 				$this->billing->name = $this->billing->street = $this->billing->city = $this->billing->state = $this->billing->zip = $this->billing->country = $this->billing->phone = "";
 			}
@@ -746,8 +751,7 @@
 			}
 
 			//build query
-			if(!empty($this->id))
-			{
+			if(!empty($this->id)){
 				//set up actions
 				$before_action = "pmpro_update_order";
 				$after_action = "pmpro_updated_order";
@@ -788,9 +792,7 @@
 									`checkout_id` = " . intval($this->checkout_id) . "
 									WHERE id = '" . esc_sql( $this->id ) . "'
 									LIMIT 1";
-			}
-			else
-			{
+			} else {
 				//set up actions
 				$before_action = "pmpro_add_order";
 				$after_action = "pmpro_added_order";
@@ -835,21 +837,18 @@
 									   '" . esc_sql($this->datetime) . "',
 									   '" . esc_sql($this->affiliate_id) . "',
 									   '" . esc_sql($this->affiliate_subid) . "',
-										'" . esc_sql($this->notes) . "',
+										'" . esc_sql($this->seat_hash) . "',
 									    " . intval($this->checkout_id) . "
 									   )";
 			}
 
 			do_action($before_action, $this);
-			if($wpdb->query($this->sqlQuery) !== false)
-			{
+			if($wpdb->query($this->sqlQuery) !== false)	{
 				if(empty($this->id))
 					$this->id = $wpdb->insert_id;
 				do_action($after_action, $this);
 				return $this->getMemberOrderByID($this->id);
-			}
-			else
-			{
+			} else {
 				return false;
 			}
 		}
@@ -880,8 +879,7 @@
 		/**
 		 * Update the status of the order in the database.
 		 */
-		function updateStatus($newstatus)
-		{
+		function updateStatus($newstatus) {
 			global $wpdb;
 
 			if(empty($this->id))

@@ -2298,6 +2298,9 @@ class PMProGateway_stripe extends PMProGateway {
 		$update_order->ProfileStartDate = date_i18n( "Y-m-d", $end_timestamp );
 		$update_order->BillingPeriod    = $update['cycle_period'];
 		$update_order->BillingFrequency = $update['cycle_number'];
+		$update_order->newSeats			= $update['newSeats'];
+		$update_order->oldSeats			= $update['oldSeats'];
+		$update_order->additionalSeats	= $update['additionalSeats'];
 		$update_order->getMembershipLevel();
 
 		//need filter to reset ProfileStartDate
@@ -2954,7 +2957,12 @@ class PMProGateway_stripe extends PMProGateway {
 		// Save $trial_period_days to order for now too.
 		$order->TrialPeriodDays = $trial_period_days;
 		$seatHash = $order->seat_hash;
-		if ($seatHash){
+
+		if ($order->newSeats){
+			$seatHash = uniqid('PBCSeatOrder_', true );
+			$order->seat_hash = $seatHash;
+			$seatString = " - Seats [Original/New/Current] [" . $order->oldSeats . "/" . $order->additionalSeats . "/" . $order->newSeats ."]";
+		} elseif ($seatHash){
 			//Get Seat Details
 			$seatArray = get_option($seatHash);
 			$currentSeats = $seatArray['currentSeats'];

@@ -303,9 +303,17 @@
 			})
 
 			jQuery('#licenseCount').change(function(){
+
 				jQuery('#updateLicenseCount').addClass('inactiveLink');
 				var newLicenseCount = jQuery(this).val();
 				var oldLicenseCount = jQuery(this).attr('oldcount');
+
+				console.log(newLicenseCount)
+				var minimum = jQuery(this).prop('min')
+				if (newLicenseCount < parseInt(minimum)){
+					jQuery(this).val(minimum)
+				}
+				
 
 				if (newLicenseCount != oldLicenseCount){
 					jQuery('#updateLicenseCount').removeClass("inactiveLink");
@@ -342,7 +350,7 @@
 				})
 			})
 
-			function downgradeSeatCount(newLicenseCount,currentUserID,nextChargeDay,nextChargeMonth,nextChargeYear){
+			function downgradeSeatCount(newLicenseCount,oldLicenseCount,additionalLicenses,currentUserID,nextChargeDay,nextChargeMonth,nextChargeYear){
 
 				jQuery.ajax({ 
 					url: "<?php echo admin_url( 'admin-ajax.php' );?>",
@@ -365,7 +373,9 @@
 								nextChargeDay: nextChargeDay,
 								nextChargeMonth: nextChargeMonth,
 								nextChargeYear: nextChargeYear,
-								newSeats: newLicenseCount
+								newSeats: newLicenseCount,
+								oldSeats: oldLicenseCount,
+								additionalSeats: additionalLicenses
 							},
 							success: function(value) {
 								//Show success message
@@ -390,6 +400,9 @@
 
 				console.log(newLicenseCount);
 				console.log(oldLicenseCount);
+
+				var additionalLicenses = newLicenseCount - oldLicenseCount;
+
 				var currentUserID = <?php echo $current_user->ID; ?>;
 				<?php
 					global $current_user;
@@ -416,7 +429,7 @@
 
 				if (newLicenseCount < oldLicenseCount){
 					jQuery("#downgradeSeatCount").click(function(){
-						downgradeSeatCount(newLicenseCount,currentUserID,nextChargeDay,nextChargeMonth,nextChargeYear)
+						downgradeSeatCount(newLicenseCount,oldLicenseCount,additionalLicenses,currentUserID,nextChargeDay,nextChargeMonth,nextChargeYear)
 					});
 				
 					//Popup Confirmation
@@ -469,6 +482,252 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- Modal -->
+	<div class="modal fade" role="dialog" id="sendEmailPopup">
+		<div class="modal-dialog">
+			<!-- Modal content-->
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Send Coach Invite</h4>
+					<button type="button" class="close" data-dismiss="modal">×</button>
+				</div>
+				<div class="modal-body">
+
+					<form role="form" method="post" id="sendInviteForm">
+						<div class="form-group">
+							<label for="name" style='font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol"; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #212529;'>Name:</label>
+							<input type="text" class="form-control"	id="name" name="name" placeholder="Enter recipient name" required>
+						</div>
+
+						<div class="form-group">
+							<label for="email" style='font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol"; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #212529;'>	Email:</label>
+							<input type="email" placeholder="Enter recipient email" class="form-control"
+							id="email" name="email" required>
+						</div>
+						<div class="form-group" style="text-align:center;">
+							<label for="name" style='font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol"; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #212529;'>	Preview:</label>
+							<div name="message"	id="message" disabled style="text-align:left; border:1px solid black; padding:15px; border-radius:10px;font-size:14px;">
+							<div align="center"><img src="https://poweredbychange.com/wp-content/uploads/2021/01/oie_QU2nkbCDr0F3.png" width="200"><br><strong>Sent by PBC on behalf of <?php echo $current_user->user_firstname . " " . $current_user->user_lastname?></strong></div><span id="messageContents"></span></div>
+						</div>
+						<button type="submit" class="btn btn-lg btn-success btn-block" id="btnSendEmails">Send Invite →</button>
+					</form>
+					<div class="alert alert-success" role="alert" id="success_message" style="width:100%; height:100%; display:none; ">
+						Sent your message successfully! Ready to send another invite
+					</div>
+					<div class="alert alert-warning" role="alert" id="error_message"	style="width:100%; height:100%; display:none; ">
+						Error - Sorry there was an error sending your email.
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal fade" role="dialog" id="sendEmailPopupClients">
+		<div class="modal-dialog">
+			<!-- Modal content-->
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Send Client Invite</h4>
+					<button type="button" class="close" data-dismiss="modal">×</button>
+				</div>
+				<div class="modal-body">
+
+					<form role="form" method="post" id="sendInviteFormClients">
+						<div class="form-group">
+							<label for="name_clients" style='font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol"; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #212529;'>Name:</label>
+							<input type="text" class="form-control"	id="name_clients" name="name_clients" placeholder="Enter recipient name" required>
+						</div>
+
+						<div class="form-group">
+							<label for="email_clients" style='font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol"; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #212529;'>	Email:</label>
+							<input type="email" placeholder="Enter recipient email" class="form-control" id="email_clients" name="email_clients" required>
+						</div>
+						<div class="form-group" style="text-align:center;">
+							<label for="message_clients" style='font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol"; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #212529;'>	Preview:</label>
+							<div name="message_clients"	id="message_clients" disabled style="text-align:left; border:1px solid black; padding:15px; border-radius:10px;font-size:14px;">
+							<div align="center"><img src="https://poweredbychange.com/wp-content/uploads/2021/01/oie_QU2nkbCDr0F3.png" width="200"><br><strong>Sent by PBC on behalf of <?php echo $current_user->user_firstname . " " . $current_user->user_lastname?></strong></div><span id="messageContents_clients"></span></div>
+						</div>
+						<button type="submit" class="btn btn-lg btn-success btn-block" id="btnSendEmailsClients">Send Invite →</button>
+					</form>
+					<div class="alert alert-success" role="alert" id="success_message_clients" style="width:100%; height:100%; display:none; ">
+						Sent your message successfully! Ready to send another invite
+					</div>
+					<div class="alert alert-warning" role="alert" id="error_message_clients"	style="width:100%; height:100%; display:none; ">
+						Error - Sorry there was an error sending your email.
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+		//Coaches
+		function after_form_submitted(data) {
+			console.log(data.response)
+			if(data.result == 'success') {
+				//$('form#sendInviteForm').hide();
+				$('#success_message').show();
+				$('#email').val('')
+				$('#name').val('')
+				$('#error_message').hide();
+				updateEmailCopy();
+			} else {
+				$('#error_message').append('<ul></ul>');
+				jQuery.each(data.errors,function(key,val){
+					$('#error_message ul').append('<li>'+key+':'+val+'</li>');
+				});
+				$('#success_message').hide();
+				$('#error_message').show();
+			}
+
+			//reverse the response on the button
+			$('button[type="button"]', $form).each(function() {
+				$btn = $(this);
+				label = $btn.prop('orig_label');
+				if(label) {
+					$btn.prop('type','submit' );
+					$btn.text(label);
+					$btn.prop('orig_label','');
+				}
+			});
+		}
+
+		$('#sendCoachReferralLink').click(function(){
+			//Update Email Copy
+			updateEmailCopy();
+		})
+
+		$('#name').on('input selectionchange propertychange',function(){
+			//Update EMail Copy
+			updateEmailCopy();
+		})
+
+		function updateEmailCopy(){
+			var name = $('#name').val();
+			if (!name){
+				name = "there";
+			}
+			var referralLink = $('#coachReferralLink').attr('referrallink');
+			referralLink.replace('"','');
+			var coachName = "<?php echo $current_user->user_firstname . " " . $current_user->user_lastname?>"
+			var emailCopy = "<br>Hi " + name +",<br><br>I’ve just become a PBC coach. Here’s my referral link you can use to do the same: <a href='" + referralLink + "'>Link</a><br><br>To find out how PBC can enhance your business coaching and generate an income stream, check out the **explainer** video, **webinar** overview, **revenue** video and **coaches revenue calculator**.<br><br>Feel free to get in touch with me if you have any questions.<br><br>Regards,<br>" + coachName;
+
+			$('#messageContents').html(emailCopy);
+		}
+
+		$('#sendInviteForm').submit(function(e) {
+			e.preventDefault();
+
+			$form = $(this);
+			//show some response on the button
+			$('button[type="submit"]', $form).each(function() {
+				$btn = $(this);
+				$btn.prop('type','button' );
+				$btn.prop('orig_label',$btn.text());
+				$btn.text('Sending ...');
+			});
+
+			var coachName = "<?php echo $current_user->user_firstname . " " . $current_user->user_lastname?>"
+
+			jQuery.ajax({ 
+				url: "<?php echo admin_url( 'admin-ajax.php' );?>",
+				type: 'POST',
+				async: true,
+				data: {
+					action: "sendEmailInvites",
+					email: $('#email').val(),
+					message: $('#messageContents').html(),
+					coachName: coachName,
+					emailType: "Coach"
+				},
+				success: after_form_submitted,
+				dataType: 'json'
+			});
+		});
+
+		//Clients
+		function after_form_submitted_clients(data) {
+			console.log(data.response)
+			if(data.result == 'success') {
+				//$('form#sendInviteForm').hide();
+				$('#success_message_clients').show();
+				$('#email_clients').val('')
+				$('#name_clients').val('')
+				$('#error_message_clients').hide();
+				updateEmailCopyClients();
+			} else {
+				$('#error_message_clients').append('<ul></ul>');
+				jQuery.each(data.errors,function(key,val){
+					$('#error_message_clients ul').append('<li>'+key+':'+val+'</li>');
+				});
+				$('#success_message_clients').hide();
+				$('#error_message_clients').show();
+			}
+
+			//reverse the response on the button
+			$('button[type="button"]', $form).each(function() {
+				$btn = $(this);
+				label = $btn.prop('orig_label');
+				if(label) {
+					$btn.prop('type','submit' );
+					$btn.text(label);
+					$btn.prop('orig_label','');
+				}
+			});
+		}
+
+		$('#sendClientReferralLink').click(function(){
+			//Update Email Copy
+			updateEmailCopyClients();
+		})
+
+		$('#name_clients').on('input selectionchange propertychange',function(){
+			//Update EMail Copy
+			updateEmailCopyClients();
+		})
+
+		function updateEmailCopyClients(){
+			var name = $('#name_clients').val();
+			if (!name){
+				name = "there";
+			}
+			var referralLink = $('#referralLink').attr('referrallink');
+			referralLink.replace('"','');
+			var coachName = "<?php echo $current_user->user_firstname . " " . $current_user->user_lastname?>"
+			var emailCopy = "<br>Hi " + name +",<br><br>Great news, I’m inviting you to join my PBC group so we can use this platform to supercharge your results. <br><br>Here’s my referral link you can use to join my group so we can collaborate and enhance your success: <a href='" + referralLink + "'>Link</a><br><br>Feel free to get in touch with me if you have any questions.<br><br>Regards,<br>" + coachName;
+
+			$('#messageContents_clients').html(emailCopy);
+		}
+
+		$('#sendInviteFormClients').submit(function(e) {
+			e.preventDefault();
+
+			$form = $(this);
+			//show some response on the button
+			$('button[type="submit"]', $form).each(function() {
+				$btn = $(this);
+				$btn.prop('type','button' );
+				$btn.prop('orig_label',$btn.text());
+				$btn.text('Sending ...');
+			});
+
+			var coachName = "<?php echo $current_user->user_firstname . " " . $current_user->user_lastname?>"
+
+			jQuery.ajax({ 
+				url: "<?php echo admin_url( 'admin-ajax.php' );?>",
+				type: 'POST',
+				async: true,
+				data: {
+					action: "sendEmailInvites",
+					email: $('#email_clients').val(),
+					message: $('#messageContents_clients').html(),
+					coachName: coachName,
+					emailType: "Client"
+				},
+				success: after_form_submitted_clients,
+				dataType: 'json'
+			});
+		});
+	</script>
 	<?php
 	}
 ?>
