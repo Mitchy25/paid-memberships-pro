@@ -71,7 +71,8 @@
 										if(count($pmpro_levels) > 1 && !defined("PMPRO_DEFAULT_LEVEL")) { ?>
 										<a id="pmpro_actionlink-change" href="<?php echo pmpro_url("levels")?>" id="pmpro_account-change"><?php _e("Change", 'buddyboss-theme' );?></a>
 									<?php } ?>
-									<a id="pmpro_actionlink-cancel" href="<?php echo pmpro_url("cancel", "?levelstocancel=" . $level->id)?>"><?php _e("Cancel", 'buddyboss-theme' );?></a>
+									<br>
+									<a id="pmpro_actionlink-cancel" href="<?php echo pmpro_url("cancel", "?levelstocancel=" . $level->id)?>"><?php _e("Cancel Membership", 'buddyboss-theme' );?></a>
 									<?php do_action("pmpro_member_action_links_after"); ?>
 								</div> <!-- end pmpro_actionlinks -->
 							</td>
@@ -118,7 +119,7 @@
     					<?php do_action('pmpro_account_bullets_bottom');?>
     				</ul>
     				<div class="pmpro_actionlinks">
-    					<a id="pmpro_actionlink-profile" href="<?php echo admin_url('profile.php')?>" id="pmpro_account-edit-profile"><?php _e("Edit Profile", 'buddyboss-theme' );?></a>
+    					<a id="pmpro_actionlink-profile" href="<?php echo admin_url('profile.php')?>" id="pmpro_account-edit-profile"><?php _e("Edit Profile", 'buddyboss-theme' );?></a><br>
     					<a id="pmpro_actionlink-password" href="<?php echo admin_url('profile.php')?>" id="pmpro_account-change-password"><?php _e('Change Password', 'buddyboss-theme' );?></a>
     				</div>
                 </div>
@@ -213,7 +214,7 @@
 						scrollTop: jQuery('h3:contains("My Coach Referrals")').offset().top
 					}, 2000);
 					jQuery('h3:contains("My Coach Referrals")').effect("highlight", {}, 2000);
-				} else if (focus == "clientLicenses"){
+				} else if (focus == "clientLicences"){
 					if (jQuery('h3:contains("My Clients")').length>0){
 						jQuery('html, body').animate({
 							scrollTop: jQuery('h3:contains("My Clients")').offset().top
@@ -238,7 +239,7 @@
 			});
 			
 			jQuery('#addSeats').click(function(){
-                window.location = "<?php echo home_url( '/membership-account/membership'); ?>";
+                window.location = "<?php echo home_url( '/membership-account/membership?seats=1'); ?>";
             })
 
 			jQuery('#confirmDeleteUser').click(function(){
@@ -448,7 +449,7 @@
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">
 			<div class="modal-header">
-				<h5 class="modal-title" id="exampleModalLabel" style="width:100%;text-align:center;">Updating Client Licenses</h5>
+				<h5 class="modal-title" id="exampleModalLabel" style="width:100%;text-align:center;">Updating Client Licences</h5>
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 				<span aria-hidden="true">&times;</span>
 				</button>
@@ -555,6 +556,23 @@
 					<div class="alert alert-warning" role="alert" id="error_message_clients"	style="width:100%; height:100%; display:none; ">
 						Error - Sorry there was an error sending your email.
 					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal fade" role="dialog" id="notEnoughLicenses">
+		<div class="modal-dialog">
+			<!-- Modal content-->
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Not Enough Client Licences</h4>
+					<button type="button" class="close" data-dismiss="modal">×</button>
+				</div>
+				<div class="modal-body">
+					You currently have used all of your client licences. Please purchase more licences to send invites.
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-success" data-dismiss="modal">Ok</button>
 				</div>
 			</div>
 		</div>
@@ -676,11 +694,28 @@
 		}
 
 		$('#sendClientReferralLink').click(function(){
-			//Update Email Copy
-			updateEmailCopyClients();
+			var usedClientLicenses = parseInt($('#usedClientLicenses').text())
+			var totalClientLicenses = parseInt($('#totalClientLicenses').text())
+
+			console.log(usedClientLicenses)
+			console.log(totalClientLicenses)
+			if (usedClientLicenses == totalClientLicenses){
+				$('#notEnoughLicenses').modal('show');
+			} else {
+				//Update Email Copy
+				updateEmailCopyClients();
+				$('#sendEmailPopupClients').modal('show');
+			}
+			
+			
 		})
 
 		$('#name_clients').on('input selectionchange propertychange',function(){
+			//Update EMail Copy
+			updateEmailCopyClients();
+		})
+
+		$('#email_clients').on('input selectionchange propertychange',function(){
 			//Update EMail Copy
 			updateEmailCopyClients();
 		})
@@ -693,7 +728,8 @@
 			var referralLink = $('#referralLink').attr('referrallink');
 			referralLink.replace('"','');
 			var coachName = "<?php echo $current_user->user_firstname . " " . $current_user->user_lastname?>"
-			var emailCopy = "<br>Hi " + name +",<br><br>Great news, I’m inviting you to join my PBC group so we can use this platform to supercharge your results. <br><br>Here’s my referral link you can use to join my group so we can collaborate and enhance your success: <a href='" + referralLink + "'>Link</a><br><br>Feel free to get in touch with me if you have any questions.<br><br>Regards,<br>" + coachName;
+			var coachEmail = "<?php echo $current_user->user_email;?>"
+			var emailCopy = "<br>Hi " + name +",<br><br>I’m inviting you to join my PBC group so we can use this platform to supercharge your results. <br><br>Here’s my referral link you can use to join my group so we can collaborate and enhance your success: <a href='" + referralLink + "&bemail=" + jQuery('#email_clients').val() + "'>Link</a><br><br>Feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
 
 			$('#messageContents_clients').html(emailCopy);
 		}

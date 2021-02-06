@@ -381,7 +381,12 @@ function pmpro_getLevelCost( &$level, $tags = true, $short = false ) {
 
 	if (!$clevel){
 		if ( ! $short ) {
-			$r = sprintf( __( 'The price for %s\'s Membership is <strong>%s</strong> now', 'paid-memberships-pro' ),$level->name, pmpro_formatPrice( $level->initial_payment ) );
+			if ($level->name == "Client"){
+				$r = sprintf( __( 'Your client membership is managed by your coach. You will not be charged by PBC for your subscription', 'paid-memberships-pro' ));
+			} else {
+				$r = sprintf( __( 'The price for your %s\'s Membership is <strong>%s</strong> now', 'paid-memberships-pro' ),$level->name, pmpro_formatPrice( $level->initial_payment ) );
+			}
+			
 		} else {
 			if ( pmpro_isLevelFree( $level ) ) {
 				$r = '<strong>' . __('Free', 'paid-memberships-pro' ) . '</strong>';
@@ -393,34 +398,42 @@ function pmpro_getLevelCost( &$level, $tags = true, $short = false ) {
 		// recurring part
 		if ( $level->billing_amount != '0.00' ) {
 			if ( $level->billing_limit > 1 ) {
+				//Ignore
 				if ( $level->cycle_number == '1' ) {
 					$r .= sprintf( __( ' and then <strong>%1$s per %2$s for %3$d more %4$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ), $level->billing_limit, pmpro_translate_billing_period( $level->cycle_period, $level->billing_limit ) );
 				} else {
 					$r .= sprintf( __( ' and then <strong>%1$s every %2$d %3$s for %4$d more payments</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ), $level->billing_limit );
 				}
 			} elseif ( $level->billing_limit == 1 ) {
+				//Ignore
 				$r .= sprintf( __( ' and then <strong>%1$s after %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
 			} else {
 				if ( $level->billing_amount === $level->initial_payment ) {
+					//No Discount
 					if ( $level->cycle_number == '1' ) {
 						if ( ! $short ) {
-							$r = sprintf( __( 'The price for Coaches Membership is <strong>%1$s per %2$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), pmpro_translate_billing_period( $level->cycle_period ) );
+							$r = sprintf( __( 'The price for your Coaches Membership is <strong>%1$s per %2$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), pmpro_translate_billing_period( $level->cycle_period ) );
 						} else {
 							$r = sprintf( __( '<strong>%1$s per %2$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), pmpro_translate_billing_period( $level->cycle_period ) );
 						}
 					} else {
 						if ( ! $short ) {
-							$r = sprintf( __( 'The price for Coaces Membership is <strong>%1$s every %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
+							$r = sprintf( __( 'The price for your Coaches Membership is <strong>%1$s every %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
 						} else {
 							$r = sprintf( __( '<strong>%1$s every %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
 						}
 					}
 				} else {
-					if ( $level->cycle_number == '1' ) {
-						$r .= sprintf( __( ' and then <strong>%1$s per %2$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ) );
+					if (!$level->trial_limit){
+						if ( $level->cycle_number == '1') {
+							$r .= sprintf( __( ' and then <strong>%1$s per %2$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ) );
+						} else {
+							$r .= sprintf( __( ' and then <strong>%1$s every %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
+						}
 					} else {
-						$r .= sprintf( __( ' and then <strong>%1$s every %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
+						$r .= ".";
 					}
+					
 				}
 			}
 		} else {
@@ -434,15 +447,15 @@ function pmpro_getLevelCost( &$level, $tags = true, $short = false ) {
 		if ( $level->trial_limit ) {
 			if ( $level->trial_amount == '0.00' ) {
 				if ( $level->trial_limit == '1' ) {
-					$r .= ' ' . __( 'After your initial payment, your first payment is Free.', 'paid-memberships-pro' );
+					$r .= '<br>' . sprintf(__( 'For the next <strong>%1$s</strong>, your membership price will be <strong>FREE</strong>, and then <strong>%2$s for every %3$s</strong> afterwards.', 'paid-memberships-pro' ), pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ));
 				} else {
-					$r .= ' ' . sprintf( __( 'After your initial payment, your first %d payments are Free.', 'paid-memberships-pro' ), $level->trial_limit );
+					$r .= '<br>' . sprintf( __( 'For the next <strong>%1$s %2$ss</strong>, your membership price will be <strong>FREE</strong>, and then <strong>%3$s for every %2$s</strong> afterwards.', 'paid-memberships-pro' ), $level->trial_limit, pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->billing_amount ));
 				}
 			} else {
 				if ( $level->trial_limit == '1' ) {
-					$r .= ' ' . sprintf( __( 'After your initial payment, your first payment will cost %s.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->trial_amount ) );
+					$r .= '<br>' . sprintf( __( 'For the next <strong>%1$s</strong>, your membership price will cost %2$s, and then <strong>%3$s for every %1$s</strong> afterwards.', 'paid-memberships-pro' ), pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->trial_amount ), pmpro_formatPrice( $level->billing_amount ));
 				} else {
-					$r .= ' ' . sprintf( __( 'After your initial payment, your first %1$d payments will cost %2$s.', 'paid-memberships-pro' ), $level->trial_limit, pmpro_formatPrice( $level->trial_amount ) );
+					$r .= '<br>' . sprintf( __( 'For the next <strong>%1$s %2$ss</strong>, your membership price will be <strong>%3$s per %2$s</strong>, and then <strong>%4$s for every %2$s</strong> afterwards.', 'paid-memberships-pro' ), $level->trial_limit, pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->trial_amount ), pmpro_formatPrice( $level->billing_amount ));
 				}
 			}
 		}
@@ -500,7 +513,7 @@ function pmpro_getLevelsCost( &$levels, $tags = true, $short = false ) {
 
 	// initial payment
 	if ( ! $short ) {
-		$r = sprintf( __( 'The price for Coaches Membership is <strong>%s</strong> now', 'paid-memberships-pro' ), pmpro_formatPrice( $initpmt ) );
+		$r = sprintf( __( 'The price for your Coaches Membership is <strong>%s</strong> now', 'paid-memberships-pro' ), pmpro_formatPrice( $initpmt ) );
 	} else {
 		$r = sprintf( __( '<strong>%s</strong> now', 'paid-memberships-pro' ), pmpro_formatPrice( $initpmt ) );
 	}

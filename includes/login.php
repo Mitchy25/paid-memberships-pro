@@ -58,22 +58,24 @@ function pmpro_login_head() {
 		if ( isset ($_REQUEST['action'] ) && $_REQUEST['action'] == "register" ||
 			isset($_REQUEST['registration']) && $_REQUEST['registration'] == "disabled" ) {
 
-				// don't redirect if in admin.
-				if ( is_admin() ) {
-					return;
-				}
-
-				//redirect to levels page unless filter is set.
-				$link = apply_filters("pmpro_register_redirect", pmpro_url( 'levels' ));
-				if(!empty($link)) {
-					wp_redirect($link);
-					exit;
-				}
-
-			} else {
-				return; //don't redirect if pmpro_register_redirect filter returns false or a blank URL
+			// don't redirect if in admin.
+			if ( is_admin() ) {
+				return;
 			}
-	 	}
+
+			//redirect to levels page unless filter is set.
+			$link = apply_filters("pmpro_register_redirect", pmpro_url( 'levels' ));
+			if(!empty($link)) {
+				wp_redirect($link);
+				exit;
+			}
+
+		} else {
+			return; //don't redirect if pmpro_register_redirect filter returns false or a blank URL
+		}
+	}
+
+	
 }
 add_action('wp', 'pmpro_login_head');
 add_action('login_init', 'pmpro_login_head');

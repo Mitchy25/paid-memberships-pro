@@ -4,6 +4,59 @@ global $post, $gateway, $wpdb, $besecure, $discount_code, $discount_code_id, $pm
 // we are on the checkout page
 add_filter( 'pmpro_is_checkout', '__return_true' );
 
+add_action( 'template_redirect', 'redirectIfNotRequired');
+
+function redirectIfNotRequired(){
+	global $current_user, $pmpro_checkout_level_ids;
+	//redirect to membership
+	$rurl = pmpro_url( "account");
+
+	//Check if alreadys signed up and not getting more seats
+	if ($current_user->ID && !isset($_REQUEST['seats'])) {
+		wp_redirect( $rurl );
+		exit(0);
+	}
+
+	if ($current_user->ID && (isset($_REQUEST['discount_code']) || isset($_REQUEST['affiliate_code']))){
+		wp_redirect( $rurl );
+		exit(0);
+	}
+
+	//Check if Discount Code is all used
+	if (isset($_REQUEST['discount_code'])){
+		$discount_code = preg_replace( "/[^A-Za-z0-9\-]/", "", $_REQUEST['discount_code'] );	
+		$pmpro_level = pmpro_getLevelAtCheckout();
+		if ( isset( $pmpro_checkout_level_ids ) ) {
+			$code_check = pmpro_checkDiscountCode( $discount_code, $pmpro_checkout_level_ids, true );
+		} else {
+			if (!empty( $pmpro_level->id )){
+				$code_check = pmpro_checkDiscountCode( $discount_code, $pmpro_level->id, true );
+			} else {
+				$code_check = pmpro_checkDiscountCode( $discount_code, null, true );
+			}
+			
+		}
+
+		if (isset($_REQUEST['bemail'])){
+			$bemail = $_REQUEST['bemail'];
+		} else {
+			$bemail;
+		}
+
+		if ( $code_check[0] == false && $code_check[1] == "This discount code is no longer valid.") {
+			if ($bemail){
+				wp_redirect("https://poweredbychange.com/client-licences-required?discount_code=" . $discount_code. "&bemail=" . $bemail);
+			} else {
+				wp_redirect("https://poweredbychange.com/client-licences-required?discount_code=" . $discount_code);
+			}
+			exit(0);
+		}
+	}
+
+	
+}
+
+
 //make sure we know current user's membership level
 if ( $current_user->ID ) {
 	$current_user->membership_level = pmpro_getMembershipLevelForUser( $current_user->ID );
@@ -57,8 +110,8 @@ $pmpro_level = pmpro_getLevelAtCheckout();
 do_action( 'pmpro_checkout_preheader_after_get_level_at_checkout', $pmpro_level );
 
 if ( empty( $pmpro_level->id ) ) {
-	wp_redirect( pmpro_url( "levels" ) );
-	exit( 0 );
+	//wp_redirect( pmpro_url( "levels" ) );
+	//exit( 0 );
 }
 
 //enqueue some scripts
@@ -115,7 +168,7 @@ if ( $tospage ) {
 }
 
 //load em up (other fields)
-global $affiliate_id, $affiliate_code, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth, $ExpirationYear;
+global $seats, $newSeats, $originalSeats, $affiliate_id, $affiliate_code, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth, $ExpirationYear;
 
 if ( isset( $_REQUEST['order_id'] ) ) {
 	$order_id = intval( $_REQUEST['order_id'] );
@@ -461,6 +514,13 @@ if ( $submit && $pmpro_msgt != "pmpro_error" ) {
 				if ( $pmpro_requirebilling ) {
 					$morder = pmpro_build_order_for_checkout();
 
+					//Add Seat Hash
+					if ($seats){
+						// $newSeats = $number_of_seats - $originalSeats;
+						$morder->seat_hash = uniqid('PBCSeatOrder_', true );
+						add_option($morder->seat_hash, array('currentSeats'=>$seats, 'originalSeats'=>$originalSeats, 'newSeats'=>$newSeats));
+					}
+
 					$pmpro_processed = $morder->process();
 
 					if ( ! empty( $pmpro_processed ) ) {
@@ -686,11 +746,12 @@ if ( ! empty( $pmpro_confirmed ) ) {
 				$morder->membership_id = $pmpro_level->id;  
 				
 				//Add Seat Hash
-				if ($seats){
-					// $newSeats = $number_of_seats - $originalSeats;
-					$morder->seat_hash = uniqid('PBCSeatOrder_', true );
-					add_option($morder->seat_hash, array('currentSeats'=>$seats, 'originalSeats'=>$originalSeats, 'newSeats'=>$newSeats));
-				}
+				// if ($seats){
+				// 	// $newSeats = $number_of_seats - $originalSeats;
+				// 	$morder->seat_hash = uniqid('PBCSeatOrder_', true );
+				// 	add_option($morder->seat_hash, array('currentSeats'=>$seats, 'originalSeats'=>$originalSeats, 'newSeats'=>$newSeats));
+				// 	error_log("HASH: " .$morder->seat_hash);
+				// }
 
 				//Add Affiliate ID after User ID is available
 				add_user_meta($user_id,"affiliateCode",$morder->affiliate_id);
@@ -705,6 +766,7 @@ if ( ! empty( $pmpro_confirmed ) ) {
 					}
 					$wpdb->query( "INSERT INTO $wpdb->pmpro_discount_codes_uses (code_id, user_id, order_id, timestamp) VALUES('" . $affiliate_code_id . "', '" . $user_id . "', '" . intval( $code_order_id ) . "', '" . current_time( "mysql" ) . "')" );
 				}
+			
 				$morder->saveOrder();
 			}
 
@@ -724,7 +786,7 @@ if ( ! empty( $pmpro_confirmed ) ) {
 				}
 
 				$wpdb->query( "INSERT INTO $wpdb->pmpro_discount_codes_uses (code_id, user_id, order_id, timestamp) VALUES('" . $discount_code_id . "', '" . $user_id . "', '" . intval( $code_order_id ) . "', '" . current_time( "mysql" ) . "')" );
-        do_action( 'pmpro_discount_code_used', $code_id, $user_id, $order_id );
+        		do_action( 'pmpro_discount_code_used', $code_id, $user_id, $order_id );
 			}
 
 			//save billing info ect, as user meta

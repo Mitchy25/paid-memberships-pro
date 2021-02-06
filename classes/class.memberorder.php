@@ -356,7 +356,7 @@
 			global $wpdb;
 			$sql = $wpdb->get_row("SELECT dc.* FROM $wpdb->pmpro_discount_codes dc LEFT JOIN $wpdb->pmpro_discount_codes_uses dcu ON dc.id = dcu.code_id WHERE dcu.order_id = '" . $this->id . "' LIMIT 1");
 			if (isset($sql->code)){
-				if (substr($sql->code,7) == "PBC-Ref"){
+				if (substr($sql->code,0,7) == "PBC-Ref"){
 					$this->affiliate_id = $sql;
 				} else {
 					return false;
@@ -385,7 +385,7 @@
 			global $wpdb;
 			$sql = $wpdb->get_row("SELECT dc.* FROM $wpdb->pmpro_discount_codes dc LEFT JOIN $wpdb->pmpro_discount_codes_uses dcu ON dc.id = dcu.code_id WHERE dcu.order_id = '" . $this->id . "' LIMIT 1");
 			if (isset($sql->code)){
-				if (substr($sql->code,7) == "PBC-Ref"){
+				if (substr($sql->code,0,7) == "PBC-Ref"){
 					return false;
 				} else {
 					$this->discount_code = $sql;
