@@ -497,7 +497,7 @@ function pmpro_login_forms_handler( $show_menu = true, $show_logout_link = true,
 				?>
 				<p class="<?php echo pmpro_get_element_class( 'pmpro_lost_password-instructions' ); ?>">
 					<?php
-						esc_html_e( 'Please enter your username or email address. You will receive a link to create a new password via email.', 'paid-memberships-pro' );
+						esc_html_e( 'Please enter your username or email address. You will receive a link to create a new password via email. Please remember to check your junk/spam email folder', 'paid-memberships-pro' );
 					?>
 				</p>
 				<?php

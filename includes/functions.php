@@ -384,7 +384,7 @@ function pmpro_getLevelCost( &$level, $tags = true, $short = false ) {
 			if ($level->name == "Client"){
 				$r = sprintf( __( 'Your client membership is managed by your coach. You will not be charged by PBC for your subscription', 'paid-memberships-pro' ));
 			} else {
-				$r = sprintf( __( 'The price for your %s\'s Membership is <strong>%s</strong> now', 'paid-memberships-pro' ),$level->name, pmpro_formatPrice( $level->initial_payment ) );
+				$r = sprintf( __( 'The price for your Coaches Membership is <strong>%s</strong> for this payment', 'paid-memberships-pro' ),pmpro_formatPrice( $level->initial_payment ) );
 			}
 			
 		} else {
@@ -426,7 +426,7 @@ function pmpro_getLevelCost( &$level, $tags = true, $short = false ) {
 				} else {
 					if (!$level->trial_limit){
 						if ( $level->cycle_number == '1') {
-							$r .= sprintf( __( ' and then <strong>%1$s per %2$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ) );
+							$r .= sprintf( __( ' and then <strong>%1$s per %2$s</strong> from your next payment.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ) );
 						} else {
 							$r .= sprintf( __( ' and then <strong>%1$s every %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
 						}
@@ -447,15 +447,19 @@ function pmpro_getLevelCost( &$level, $tags = true, $short = false ) {
 		if ( $level->trial_limit ) {
 			if ( $level->trial_amount == '0.00' ) {
 				if ( $level->trial_limit == '1' ) {
-					$r .= '<br>' . sprintf(__( 'For the next <strong>%1$s</strong>, your membership price will be <strong>FREE</strong>, and then <strong>%2$s for every %3$s</strong> afterwards.', 'paid-memberships-pro' ), pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ));
+					// $r .= '<br>' . sprintf(__( 'For the next <strong>%1$s</strong>, your membership price will be <strong>FREE</strong>, and then <strong>%2$s for every %3$s</strong> afterwards.', 'paid-memberships-pro' ), pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ));
+					$r = sprintf(__( 'For the next <strong>%1$s</strong>, your Coaches Membership will be <strong>FREE</strong>, and then <strong>%2$s for every %3$s</strong> afterwards.', 'paid-memberships-pro' ), pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ));
 				} else {
-					$r .= '<br>' . sprintf( __( 'For the next <strong>%1$s %2$ss</strong>, your membership price will be <strong>FREE</strong>, and then <strong>%3$s for every %2$s</strong> afterwards.', 'paid-memberships-pro' ), $level->trial_limit, pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->billing_amount ));
+					// $r .= '<br>' . sprintf( __( 'For the next <strong>%1$s %2$ss</strong>, your membership price will be <strong>FREE</strong>, and then <strong>%3$s for every %2$s</strong> afterwards.', 'paid-memberships-pro' ), $level->trial_limit, pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->billing_amount ));
+					$r = sprintf( __( 'For the next <strong>%1$s %2$ss</strong>, your Coaches Membershipe will be <strong>FREE</strong>, and then <strong>%3$s for every %2$s</strong> afterwards.', 'paid-memberships-pro' ), $level->trial_limit, pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->billing_amount ));
 				}
 			} else {
 				if ( $level->trial_limit == '1' ) {
-					$r .= '<br>' . sprintf( __( 'For the next <strong>%1$s</strong>, your membership price will cost %2$s, and then <strong>%3$s for every %1$s</strong> afterwards.', 'paid-memberships-pro' ), pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->trial_amount ), pmpro_formatPrice( $level->billing_amount ));
+					// $r .= '<br>' . sprintf( __( 'For the next <strong>%1$s</strong>, your membership price will cost %2$s, and then <strong>%3$s for every %1$s</strong> afterwards.', 'paid-memberships-pro' ), pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->trial_amount ), pmpro_formatPrice( $level->billing_amount ));
+					$r = sprintf( __( 'For the next <strong>%1$s</strong>, your Coaches Membership will cost %2$s, and then <strong>%3$s for every %1$s</strong> afterwards.', 'paid-memberships-pro' ), pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->trial_amount ), pmpro_formatPrice( $level->billing_amount ));
 				} else {
-					$r .= '<br>' . sprintf( __( 'For the next <strong>%1$s %2$ss</strong>, your membership price will be <strong>%3$s per %2$s</strong>, and then <strong>%4$s for every %2$s</strong> afterwards.', 'paid-memberships-pro' ), $level->trial_limit, pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->trial_amount ), pmpro_formatPrice( $level->billing_amount ));
+					// $r .= '<br>' . sprintf( __( 'For the next <strong>%1$s %2$ss</strong>, your membership price will be <strong>%3$s per %2$s</strong>, and then <strong>%4$s for every %2$s</strong> afterwards.', 'paid-memberships-pro' ), $level->trial_limit, pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->trial_amount ), pmpro_formatPrice( $level->billing_amount ));
+					$r = sprintf( __( 'For the next <strong>%1$s %2$ss</strong>, your Coaches Membership will be <strong>%3$s per %2$s</strong>, and then <strong>%4$s for every %2$s</strong> afterwards.', 'paid-memberships-pro' ), $level->trial_limit, pmpro_translate_billing_period( $level->cycle_period ), pmpro_formatPrice( $level->trial_amount ), pmpro_formatPrice( $level->billing_amount ));
 				}
 			}
 		}

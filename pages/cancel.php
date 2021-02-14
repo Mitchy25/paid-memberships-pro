@@ -14,6 +14,7 @@
 		$old_level_ids = false;
 	}
 ?>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w==" crossorigin="anonymous" />
 <div id="pmpro_cancel" class="<?php echo pmpro_get_element_class( 'pmpro_cancel_wrap', 'pmpro_cancel' ); ?>">
 	<?php
 		if($pmpro_msg)
@@ -38,14 +39,36 @@
 				{
 					$level_names = $wpdb->get_col("SELECT name FROM $wpdb->pmpro_membership_levels WHERE id IN('" . implode("','", $old_level_ids) . "')");
 					?>
-					<p><?php printf(_n('Are you sure you want to cancel your %s membership?', 'Are you sure you want to cancel your %s memberships?', count($level_names), 'paid-memberships-pro'), pmpro_implodeToEnglish($level_names)); ?></p>
+					<p><?php 
+					if ($_REQUEST['levelstocancel'] == 1){
+						$extraContent = '<br><br>Cancelling your PBC Coaches Membership will also cancel all of your PBC Client Licences. Upon cancellation of your membership, all PBC Assessments will be deleted and you will no longer have access to the PBC website.
+						<br><br>
+						It also means that you will no longer be eligible to receive referral payments from Powered By Change Solutions Pty Ltd for any coaches you have referred.
+						<br><br>
+						You will be logged out once you confirm the cancellation and you will receive a cancellation email.';
+					} else {
+						$extraContent = '<br><br>Upon cancellation of your membership, all PBC Assessments will be deleted and you will no longer have access to the PBC website.
+						<br><br>
+						You will be logged out once you confirm the cancellation and you will receive a cancellation email.';
+					}
+					
+					printf(_n('Are you sure you want to cancel your %s membership?' . $extraContent, 'Are you sure you want to cancel your %s memberships?' . $extraContent, count($level_names), 'paid-memberships-pro'), pmpro_implodeToEnglish($level_names)); ?></p>
 					<?php
 				}
 			?>
 			<div class="<?php echo pmpro_get_element_class( 'pmpro_actionlinks' ); ?>">
-				<a class="<?php echo pmpro_get_element_class( 'pmpro_btn pmpro_btn-submit pmpro_yeslink yeslink', 'pmpro_btn-submit' ); ?>" href="<?php echo pmpro_url("cancel", "?levelstocancel=" . esc_attr($_REQUEST['levelstocancel']) . "&confirm=true")?>"><?php _e('Yes, cancel this membership', 'paid-memberships-pro' );?></a>
+				
+				<a class="<?php echo pmpro_get_element_class( 'pmpro_btn pmpro_btn-submit pmpro_yeslink yeslink', 'pmpro_btn-submit' ); ?>" href="<?php echo pmpro_url("cancel", "?levelstocancel=" . esc_attr($_REQUEST['levelstocancel']) . "&confirm=true")?>"><?php _e('Yes, cancel this membership', 'paid-memberships-pro' );?> <i style="display:none;" class="fas fa-spinner fa-pulse"></i></a>
 				<a class="<?php echo pmpro_get_element_class( 'pmpro_btn pmpro_btn-cancel pmpro_nolink nolink', 'pmpro_btn-cancel' ); ?>" href="<?php echo pmpro_url("account")?>"><?php _e('No, keep this membership', 'paid-memberships-pro' );?></a>
 			</div>
+			<script>
+				jQuery(document).ready(function(){
+					jQuery('.pmpro_yeslink').click(function(){
+						jQuery('.fa-spinner').show();
+					})
+				})
+
+			</script>
 			<?php
 			}
 			else

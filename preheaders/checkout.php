@@ -62,6 +62,50 @@ if ( $current_user->ID ) {
 	$current_user->membership_level = pmpro_getMembershipLevelForUser( $current_user->ID );
 }
 
+if ($current_user->membership_level){
+		//Hide Coach and Client Signup (This is seat purchase)
+	?>
+	<style>
+		#checkout-title-1 {
+			display:none;
+		}
+		#checkout-title-3 {
+			display:none;
+		}
+		#checkout-header {
+			display:none;
+		}
+	</style>
+	<?php
+} elseif (isset($_REQUEST['discount_code']) && isset($_REQUEST['level'])){
+	//Hide Coach Signup and Seat Purchase (This is client Signup)
+	?>
+	<style>
+		#checkout-title-2 {
+			display:none;
+		}
+		#checkout-title-1 {
+			display:none;
+		}
+		#checkout-header {
+			display:none;
+		}
+	</style>
+	<?php
+} else {
+	//Hide Seat Purchase and Client Signup (This is Coach Signup)
+	?>
+	<style>
+		#checkout-title-2 {
+			display:none;
+		}
+		#checkout-title-3 {
+			display:none;
+		}
+	</style>
+	<?php
+}
+
 //this var stores fields with errors so we can make them red on the frontend
 $pmpro_error_fields = array();
 
@@ -415,6 +459,7 @@ if ( $submit && $pmpro_msgt != "pmpro_error" ) {
 		$pmpro_error_fields[] = "password";
 		$pmpro_error_fields[] = "password2";
 	}
+
 	if ( strcasecmp($bemail, $bconfirmemail) !== 0 ) {
 		pmpro_setMessage( __( "Your email addresses do not match. Please try again.", 'paid-memberships-pro' ), "pmpro_error" );
 		$pmpro_error_fields[] = "bemail";
@@ -754,19 +799,21 @@ if ( ! empty( $pmpro_confirmed ) ) {
 				// }
 
 				//Add Affiliate ID after User ID is available
-				add_user_meta($user_id,"affiliateCode",$morder->affiliate_id);
-				//add affiliate code use (If first time only)
-				if ($morder->affiliate_id) {
-					//Get Affilidate Code ID
-					$affiliate_code_id = $wpdb->get_var( "SELECT id FROM $wpdb->pmpro_discount_codes WHERE code = '" . esc_sql( $morder->affiliate_id ) . "' LIMIT 1" );
-					if ( ! empty( $morder->id ) ) {
-						$code_order_id = $morder->id;
-					} else {
-						$code_order_id = "";
+				if (isset($morder->affiliate_id)){
+					add_user_meta($user_id,"affiliateCode",$morder->affiliate_id);
+					//add affiliate code use (If first time only)
+					if ($morder->affiliate_id) {
+						//Get Affilidate Code ID
+						$affiliate_code_id = $wpdb->get_var( "SELECT id FROM $wpdb->pmpro_discount_codes WHERE code = '" . esc_sql( $morder->affiliate_id ) . "' LIMIT 1" );
+						if ( ! empty( $morder->id ) ) {
+							$code_order_id = $morder->id;
+						} else {
+							$code_order_id = "";
+						}
+						$wpdb->query( "INSERT INTO $wpdb->pmpro_discount_codes_uses (code_id, user_id, order_id, timestamp) VALUES('" . $affiliate_code_id . "', '" . $user_id . "', '" . intval( $code_order_id ) . "', '" . current_time( "mysql" ) . "')" );
 					}
-					$wpdb->query( "INSERT INTO $wpdb->pmpro_discount_codes_uses (code_id, user_id, order_id, timestamp) VALUES('" . $affiliate_code_id . "', '" . $user_id . "', '" . intval( $code_order_id ) . "', '" . current_time( "mysql" ) . "')" );
 				}
-			
+				
 				$morder->saveOrder();
 			}
 

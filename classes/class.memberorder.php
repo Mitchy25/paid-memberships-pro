@@ -254,8 +254,7 @@
 		 *
 		 * @return MemberOrder
 		 */
-		function getLastMemberOrder($user_id = NULL, $status = 'success', $membership_id = NULL, $gateway = NULL, $gateway_environment = NULL)
-		{
+		function getLastMemberOrder($user_id = NULL, $status = 'success', $membership_id = NULL, $gateway = NULL, $gateway_environment = NULL){
 			global $current_user, $wpdb;
 			if(!$user_id)
 				$user_id = $current_user->ID;
@@ -280,6 +279,23 @@
 				$this->sqlQuery .= "AND gateway_environment = '" . esc_sql($gateway_environment) . "' ";
 
 			$this->sqlQuery .= "ORDER BY timestamp DESC LIMIT 1";
+
+			//get id
+			$id = $wpdb->get_var($this->sqlQuery);
+
+			return $this->getMemberOrderByID($id);
+		}
+
+		function getFirstMemberOrder($user_id = NULL, $status = 'success', $membership_id = NULL, $gateway = NULL, $gateway_environment = NULL){
+			global $current_user, $wpdb;
+			if(!$user_id)
+				$user_id = $current_user->ID;
+
+			if(!$user_id)
+				return false;
+
+			//build query
+			$this->sqlQuery = "SELECT id FROM $wpdb->pmpro_membership_orders WHERE user_id = '" . $user_id . "' AND notes = '' ORDER BY timestamp ASC LIMIT 1";
 
 			//get id
 			$id = $wpdb->get_var($this->sqlQuery);

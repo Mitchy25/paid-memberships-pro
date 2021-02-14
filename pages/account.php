@@ -119,8 +119,8 @@
     					<?php do_action('pmpro_account_bullets_bottom');?>
     				</ul>
     				<div class="pmpro_actionlinks">
-    					<a id="pmpro_actionlink-profile" href="<?php echo admin_url('profile.php')?>" id="pmpro_account-edit-profile"><?php _e("Edit Profile", 'buddyboss-theme' );?></a><br>
-    					<a id="pmpro_actionlink-password" href="<?php echo admin_url('profile.php')?>" id="pmpro_account-change-password"><?php _e('Change Password', 'buddyboss-theme' );?></a>
+    					<a id="pmpro_actionlink-profile" href="<?php echo bp_loggedin_user_domain() ;?>" id="pmpro_account-edit-profile"><?php _e("Edit Profile", 'buddyboss-theme' );?></a><br>
+    					<a id="pmpro_actionlink-password" href="<?php echo bp_loggedin_user_domain() . bp_get_settings_slug(); ?>" id="pmpro_account-change-password"><?php _e('Change Password', 'buddyboss-theme' );?></a>
     				</div>
                 </div>
 			</div> <!-- end pmpro_account-profile -->
@@ -243,24 +243,28 @@
             })
 
 			jQuery('#confirmDeleteUser').click(function(){
-				var deleteUserID = jQuery(this).attr('userid');
-				console.log(deleteUserID);
-				jQuery.ajax({ 
-					url: "<?php echo admin_url( 'admin-ajax.php' );?>",
-					type: 'POST',
-					async: false,
-					data: {
-						action: "removeUserFromCoach",
-						deleteUserID: deleteUserID
-					},
-					success: function(value) {
-						//Show success message
-						console.log(value)
-						location.reload()
-					},
+
+				$('.spinner-border').show(1000,function(){
+					var deleteUserID = jQuery('#confirmDeleteUser').attr('userid');
+					console.log(deleteUserID);
+					jQuery.ajax({ 
+						url: "<?php echo admin_url( 'admin-ajax.php' );?>",
+						type: 'POST',
+						async: false,
+						data: {
+							action: "removeUserFromCoach",
+							deleteUserID: deleteUserID
+						},
+						success: function(value) {
+							//Show success message
+							console.log(value)
+							$('#deleteUserModal').modal('hide');
+							location.reload()
+						},
+					});
 				});
 			})
-			jQuery('#deleteUser').click(function(){
+			jQuery('.deleteUser').click(function(){
 				jQuery('#confirmDeleteUser').attr('userid',jQuery(this).attr('userid'));
 				jQuery('#deleteUserModal').modal({
 					keyboard: false
@@ -478,7 +482,11 @@
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-danger" data-dismiss="modal">No, Do Not Continue</button>
-				<button id="confirmDeleteUser" type="button" class="btn btn-primary" data-dismiss="modal">Yes, Continue</button>
+				
+				<button id="confirmDeleteUser" type="button" class="btn btn-primary">
+					<span style="display:none;"class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+					Yes, Continue
+				</button>
 			</div>
 			</div>
 		</div>
@@ -627,7 +635,8 @@
 			var referralLink = $('#coachReferralLink').attr('referrallink');
 			referralLink.replace('"','');
 			var coachName = "<?php echo $current_user->user_firstname . " " . $current_user->user_lastname?>"
-			var emailCopy = "<br>Hi " + name +",<br><br>I’ve just become a PBC coach. Here’s my referral link you can use to do the same: <a href='" + referralLink + "'>Link</a><br><br>To find out how PBC can enhance your business coaching and generate an income stream, check out the **explainer** video, **webinar** overview, **revenue** video and **coaches revenue calculator**.<br><br>Feel free to get in touch with me if you have any questions.<br><br>Regards,<br>" + coachName;
+			var coachEmail = "<?php echo $current_user->user_email ?>"
+			var emailCopy = "<br>Hi " + name +",<br><br>I’ve just become a PBC coach. Here’s my referral link you can use to do the same: <a href='" + referralLink + "'>Link</a><br><br>To find out how PBC can enhance your business coaching and generate an income stream, check out the **explainer** video, **webinar** overview, **revenue** video and **coaches revenue calculator**.<br><br>Feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
 
 			$('#messageContents').html(emailCopy);
 		}

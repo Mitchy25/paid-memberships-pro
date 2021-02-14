@@ -781,6 +781,7 @@
 						<th><?php _e('Code', 'paid-memberships-pro' );?></th>
 						<th><?php _e('Starts', 'paid-memberships-pro' );?></th>
 						<th><?php _e('Expires', 'paid-memberships-pro' );?></th>
+						<th><?php _e('Signups', 'paid-memberships-pro' );?></th>
 						<th><?php _e('Uses', 'paid-memberships-pro' );?></th>
 						<th><?php _e('Levels', 'paid-memberships-pro' );?></th>
 						<?php do_action("pmpro_discountcodes_extra_cols_header", $codes);?>
@@ -797,6 +798,7 @@
 					<?php
 						foreach($codes as $code) {
 							$uses = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $wpdb->pmpro_discount_codes_uses WHERE code_id = %d", $code->id ) );
+							$uniqueUses = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT(user_id)) FROM $wpdb->pmpro_discount_codes_uses WHERE code_id = %d", $code->id ) );
 							?>
 						<tr<?php if ( ! pmpro_check_discount_code_for_gateway_compatibility( $code->id ) ) { ?> class="pmpro_error"<?php } ?>>
 							<td><?php echo $code->id?></td>
@@ -824,6 +826,14 @@
 							</td>
 							<td>
 								<?php echo date_i18n(get_option('date_format'), $code->expires)?>
+							</td>
+							<td>
+								<?php
+									if($code->uses > 0)
+										echo "<strong>" . (int)$uniqueUses . "</strong>";
+									else
+										echo "<strong>" . (int)$uniqueUses . "</strong>";
+								?>
 							</td>
 							<td>
 								<?php
