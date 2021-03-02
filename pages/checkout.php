@@ -57,6 +57,8 @@
 					$clevel = $current_user->membership_level;
 					if (!$clevel){
 						printf(__('You are signing up as a <strong>%s</strong>', 'paid-memberships-pro' ), $pmpro_level->name);
+					} else if ($clevel && ($clevel->name == "BDM" || $clevel->name == "Influencer")){
+						printf(__('You are upgrading to a <strong>%s</strong>', 'paid-memberships-pro' ), $pmpro_level->name);
 					} else if ($clevel->ID == 2) {
 						wp_redirect(home_url( '/membership-account'));
 					}
@@ -95,7 +97,7 @@
 							} else {
 								$affiliate_code = "";
 							}
-					    }
+						}
 						
 						echo wpautop(pmpro_getLevelCost($pmpro_level)); 
 					    echo wpautop(pmpro_getLevelExpiration($pmpro_level)); ?>
@@ -104,7 +106,7 @@
 
 				<?php do_action("pmpro_checkout_after_level_cost");?>
 				
-				<?php if ($pmpro_level->id == 1 && !$clevel) { ?>
+				<?php if (($pmpro_level->id == 1 && !$clevel) || ($clevel && ($current_user->membership_level->name == "BDM" || $current_user->membership_level->name == "Influencer"))) { ?>
 					<?php if($pmpro_show_discount_code) { ?>
 						<?php if($discount_code && !$pmpro_review) { ?>
 							<p id="other_discount_code_p" class="<?php echo pmpro_get_element_class( 'pmpro_small', 'other_discount_code_p' ); ?>"><?php _e('Discount Code: ' . $discount_code, 'paid-memberships-pro' );?><br><a id="other_discount_code_a" href="#discount_code"><?php _e('Click here to change your discount code.', 'paid-memberships-pro' );?></a></p>
@@ -123,7 +125,7 @@
 					<?php } ?>
 				<?php } ?>
 						
-				<?php if ($pmpro_level->id == 1 && !$clevel) { ?>
+				<?php if ($pmpro_level->id == 1 && !$clevel || ($clevel && ($current_user->membership_level->name == "BDM" || $current_user->membership_level->name == "Influencer"))) { ?>
 						<?php if($affiliate_code && !$pmpro_review) { ?>
 							<p id="other_affiliate_code_p" class="<?php echo pmpro_get_element_class( 'pmpro_small', 'other_affiliate_code_p' ); ?>"><?php _e('Coach Referral Code: ' . $affiliate_code, 'paid-memberships-pro' );?><br></p>
 						<?php } elseif(!$pmpro_review) { ?>

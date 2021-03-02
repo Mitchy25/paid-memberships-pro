@@ -25,31 +25,31 @@
 		}
 	?>
 	<?php
-		if(!$pmpro_confirm)
-		{
-			if($old_level_ids)
-			{
-				if(!is_array($old_level_ids) && $old_level_ids == "all")
-				{
+		if(!$pmpro_confirm)	{
+			if($old_level_ids)	{
+				if(!is_array($old_level_ids) && $old_level_ids == "all"){
 					?>
 					<p><?php _e('Are you sure you want to cancel your membership?', 'paid-memberships-pro' ); ?></p>
 					<?php
-				}
-				else
-				{
+				} else	{
 					$level_names = $wpdb->get_col("SELECT name FROM $wpdb->pmpro_membership_levels WHERE id IN('" . implode("','", $old_level_ids) . "')");
 					?>
 					<p><?php 
 					if ($_REQUEST['levelstocancel'] == 1){
+						//Coach
 						$extraContent = '<br><br>Cancelling your PBC Coaches Membership will also cancel all of your PBC Client Licences. Upon cancellation of your membership, all PBC Assessments will be deleted and you will no longer have access to the PBC website.
 						<br><br>
 						It also means that you will no longer be eligible to receive referral payments from Powered By Change Solutions Pty Ltd for any coaches you have referred.
 						<br><br>
 						You will be logged out once you confirm the cancellation and you will receive a cancellation email.';
-					} else {
+					} elseif ($_REQUEST['levelstocancel'] == 2){
+						//Client
 						$extraContent = '<br><br>Upon cancellation of your membership, all PBC Assessments will be deleted and you will no longer have access to the PBC website.
 						<br><br>
 						You will be logged out once you confirm the cancellation and you will receive a cancellation email.';
+					} elseif ($_REQUEST['levelstocancel'] == 8){
+						//BDM
+						$extraContent = '<br><br>Upon cancellation of your BDM membership you will no longer have access to the PBC website.<br><br>It also means that you will no longer be eligible to receive referral payments from Powered By Change Solutions Pty Ltd for any coaches you have referred.<br><br>You will  be logged out once you  confirm the cancellation.';
 					}
 					
 					printf(_n('Are you sure you want to cancel your %s membership?' . $extraContent, 'Are you sure you want to cancel your %s memberships?' . $extraContent, count($level_names), 'paid-memberships-pro'), pmpro_implodeToEnglish($level_names)); ?></p>

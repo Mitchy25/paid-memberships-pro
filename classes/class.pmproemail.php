@@ -322,9 +322,9 @@
 								"user_email" => $user->user_email,								
 							);						
 			if(!empty($invoice) && !pmpro_isLevelFree($user->membership_level))	{						
-				if($invoice->gateway == "paypalexpress")
+				if($invoice->gateway == "paypalexpress"){
 					$this->template = "checkout_express";
-				elseif($invoice->gateway == "check"){
+				} elseif($invoice->gateway == "check"){
 					$this->template = "checkout_check";
 					$this->data["instructions"] = wpautop(pmpro_getOption("instructions"));
 				} elseif(pmpro_isLevelTrial($user->membership_level)){
@@ -381,12 +381,20 @@
 				else
 					$this->data["discount_code"] = "";
 			}	elseif(pmpro_isLevelFree($user->membership_level))	{
-				$this->template = "checkout_free";		
-				global $discount_code;
-				if(!empty($discount_code))
-					$this->data["discount_code"] = "<p>" . __("Discount Code", 'paid-memberships-pro' ) . ": " . $discount_code . "</p>\n";		
-				else
-					$this->data["discount_code"] = "";		
+				if ($user->membership_level->name=="BDM"){
+					//BDM
+					$this->template = "checkout_free_bdm";		
+				} else {
+					//Client
+					$this->template = "checkout_free";		
+					global $discount_code;
+					if(!empty($discount_code)){
+						$this->data["discount_code"] = "<p>" . __("Discount Code", 'paid-memberships-pro' ) . ": " . $discount_code . "</p>\n";		
+					} else {
+						$this->data["discount_code"] = "";		
+					}
+				}
+				
 			} else	{
 				$this->template = "checkout_freetrial";
 				global $discount_code;

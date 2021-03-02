@@ -12,9 +12,20 @@ function redirectIfNotRequired(){
 	$rurl = pmpro_url( "account");
 
 	//Check if alreadys signed up and not getting more seats
-	if ($current_user->ID && !isset($_REQUEST['seats'])) {
-		wp_redirect( $rurl );
-		exit(0);
+	if ($current_user->ID && !isset($_REQUEST['seats'])){ 
+		if (isset($current_user->membership_level->name)){
+			if ($current_user->membership_level->name == "Coach" || $current_user->membership_level->name == "Client") {
+				wp_redirect( $rurl );
+				exit(0);
+			}
+		}
+	}
+
+	if (isset($_REQUEST['level']) && ($_REQUEST['level'] == 7 || $_REQUEST['level'] == 8)){
+		if (!isset($_REQUEST['adminSignup']) || $_REQUEST['adminSignup'] != "IDA1F9"){
+			wp_redirect( $rurl );
+			exit(0);
+		}
 	}
 
 	if ($current_user->ID && (isset($_REQUEST['discount_code']) || isset($_REQUEST['affiliate_code']))){
@@ -62,7 +73,7 @@ if ( $current_user->ID ) {
 	$current_user->membership_level = pmpro_getMembershipLevelForUser( $current_user->ID );
 }
 
-if ($current_user->membership_level){
+if (isset($current_user->membership_level->name) && ($current_user->membership_level->name == "Coach" || $current_user->membership_level->name == "Client")){
 		//Hide Coach and Client Signup (This is seat purchase)
 	?>
 	<style>
@@ -78,13 +89,32 @@ if ($current_user->membership_level){
 	</style>
 	<?php
 } elseif (isset($_REQUEST['discount_code']) && isset($_REQUEST['level'])){
-	//Hide Coach Signup and Seat Purchase (This is client Signup)
+	if ($_REQUEST['level'] == 2){
+		//Hide Coach Signup and Seat Purchase (This is client Signup)
+		?>
+		<style>
+			#checkout-title-2 {
+				display:none;
+			}
+			#checkout-title-1 {
+				display:none;
+			}
+			#checkout-header {
+				display:none;
+			}
+		</style>
+		<?php
+	}
+} elseif (isset($_REQUEST['level'])) {
+	if ($_REQUEST['level'] == 7 || $_REQUEST['level'] == 8) {
+		//Influence or BDM Signup (Use Checkout Title for Now)
+		
 	?>
 	<style>
-		#checkout-title-2 {
+		#checkout-title-1 {
 			display:none;
 		}
-		#checkout-title-1 {
+		#checkout-title-3 {
 			display:none;
 		}
 		#checkout-header {
@@ -92,6 +122,32 @@ if ($current_user->membership_level){
 		}
 	</style>
 	<?php
+	} elseif (isset($current_user->membership_level->name) && (($current_user->membership_level->name == "Influencer" || $current_user->membership_level->name == "BDM") && $_REQUEST['level'] == 1)){
+		//Upgrade from Influencer/BDM to Coach
+		?>
+		<style>
+			#checkout-title-2 {
+				display:none;
+			}
+			#checkout-title-3 {
+				display:none;
+			}
+
+		</style>
+		<?php
+	} elseif ($_REQUEST['level'] == 1){
+		//Hide Seat Purchase and Client Signup (This is Coach Signup)
+		?>
+		<style>
+			#checkout-title-2 {
+				display:none;
+			}
+			#checkout-title-3 {
+				display:none;
+			}
+		</style>
+		<?php
+	}
 } else {
 	//Hide Seat Purchase and Client Signup (This is Coach Signup)
 	?>
@@ -903,9 +959,11 @@ if ( ! empty( $pmpro_confirmed ) ) {
 				}
 				$current_user->membership_level = $pmpro_level; //make sure they have the right level info
 
-				//send email to member
-				$pmproemail = new PMProEmail();
-				$pmproemail->sendCheckoutEmail( $current_user, $invoice );
+				if ($current_user->membership_level->name == "Coach" || $current_user->membership_level->name == "Client" || $current_user->membership_level->name == "BDM"){
+					//send email to member
+					$pmproemail = new PMProEmail();
+					$pmproemail->sendCheckoutEmail( $current_user, $invoice );
+				}
 
 				//send email to admin
 				$pmproemail = new PMProEmail();

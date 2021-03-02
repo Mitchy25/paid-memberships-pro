@@ -379,12 +379,18 @@ function pmpro_getLevelCost( &$level, $tags = true, $short = false ) {
 	global $current_user;
 	$clevel = $current_user->membership_level;
 
-	if (!$clevel){
+	if (!$clevel || ($clevel->name == "BDM" || $clevel->name == "Influencer")){
 		if ( ! $short ) {
 			if ($level->name == "Client"){
 				$r = sprintf( __( 'Your client membership is managed by your coach. You will not be charged by PBC for your subscription', 'paid-memberships-pro' ));
-			} else {
+			} elseif ($level->name == "Coach") {
 				$r = sprintf( __( 'The price for your Coaches Membership is <strong>%s</strong> for this payment', 'paid-memberships-pro' ),pmpro_formatPrice( $level->initial_payment ) );
+			} elseif ($level->name == "Influencer") {
+				$r = sprintf( __( 'The price for your Influencers Membership is <strong>%s</strong> for this payment', 'paid-memberships-pro' ),pmpro_formatPrice( $level->initial_payment ) );
+			} elseif ($level->name == "BDM") {
+				$r = sprintf( __( 'The price for your BDM Membership is <strong>%s</strong> for this payment', 'paid-memberships-pro' ),pmpro_formatPrice( $level->initial_payment ) );
+			} else {
+				$r = sprintf( __( 'The price for your Membership is <strong>%s</strong> for this payment', 'paid-memberships-pro' ),pmpro_formatPrice( $level->initial_payment ) );
 			}
 			
 		} else {
@@ -2324,7 +2330,7 @@ function pmpro_getLevelAtCheckout( $level_id = null, $discount_code = null ) {
 	}
 
 	// filter the level (for upgrades, etc)
-	$pmpro_level = apply_filters( 'pmpro_checkout_level', $pmpro_level );
+	//$pmpro_level = apply_filters( 'pmpro_checkout_level', $pmpro_level );
 
 	return $pmpro_level;
 }
