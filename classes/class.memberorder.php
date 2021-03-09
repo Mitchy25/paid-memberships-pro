@@ -254,14 +254,23 @@
 		 *
 		 * @return MemberOrder
 		 */
-		function getLastMemberOrder($user_id = NULL, $status = 'success', $membership_id = NULL, $gateway = NULL, $gateway_environment = NULL)
-		{
+		function getLastMemberOrder($user_id = NULL, $status = 'success', $membership_id = NULL, $gateway = NULL, $gateway_environment = NULL){
 			global $current_user, $wpdb;
 			if(!$user_id)
 				$user_id = $current_user->ID;
 
 			if(!$user_id)
 				return false;
+
+			//If Membership ID is null, get last Order with SAME membership ID. This will reset upgrades
+			// if ($membership_id == NULL){
+			// 	$user_level = pmpro_getMembershipLevelForUser( $user_id );
+			// 	if (isset($user_level)){
+			// 		$membership_id = $user_level->id;
+			// 	}
+			// }
+
+			// error_log($membership_id);
 
 			//build query
 			$this->sqlQuery = "SELECT id FROM $wpdb->pmpro_membership_orders WHERE user_id = '" . $user_id . "' ";
@@ -280,6 +289,23 @@
 				$this->sqlQuery .= "AND gateway_environment = '" . esc_sql($gateway_environment) . "' ";
 
 			$this->sqlQuery .= "ORDER BY timestamp DESC LIMIT 1";
+
+			//get id
+			$id = $wpdb->get_var($this->sqlQuery);
+
+			return $this->getMemberOrderByID($id);
+		}
+
+		function getFirstMemberOrder($user_id = NULL, $status = 'success', $membership_id = NULL, $gateway = NULL, $gateway_environment = NULL){
+			global $current_user, $wpdb;
+			if(!$user_id)
+				$user_id = $current_user->ID;
+
+			if(!$user_id)
+				return false;
+
+			//build query (Get first COACH order)
+			$this->sqlQuery = "SELECT id FROM $wpdb->pmpro_membership_orders WHERE user_id = '" . $user_id . "' AND notes = '' AND membership_id = 1 ORDER BY timestamp ASC LIMIT 1";
 
 			//get id
 			$id = $wpdb->get_var($this->sqlQuery);
@@ -356,7 +382,7 @@
 			global $wpdb;
 			$sql = $wpdb->get_row("SELECT dc.* FROM $wpdb->pmpro_discount_codes dc LEFT JOIN $wpdb->pmpro_discount_codes_uses dcu ON dc.id = dcu.code_id WHERE dcu.order_id = '" . $this->id . "' LIMIT 1");
 			if (isset($sql->code)){
-				if (substr($sql->code,7) == "PBC-Ref"){
+				if (substr($sql->code,0,7) == "PBC-Ref"){
 					$this->affiliate_id = $sql;
 				} else {
 					return false;
@@ -385,7 +411,7 @@
 			global $wpdb;
 			$sql = $wpdb->get_row("SELECT dc.* FROM $wpdb->pmpro_discount_codes dc LEFT JOIN $wpdb->pmpro_discount_codes_uses dcu ON dc.id = dcu.code_id WHERE dcu.order_id = '" . $this->id . "' LIMIT 1");
 			if (isset($sql->code)){
-				if (substr($sql->code,7) == "PBC-Ref"){
+				if (substr($sql->code,0,7) == "PBC-Ref"){
 					return false;
 				} else {
 					$this->discount_code = $sql;

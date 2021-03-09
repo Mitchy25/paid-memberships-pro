@@ -110,7 +110,7 @@
 			}
 
 			jQuery('#other_affiliate_code_tr').hide();
-			jQuery('#other_affiliate_code_p').html('<a id="other_affiliate_code_a" href="javascript:void(0);"><?php _e('Click here to change your affiliate code', 'paid-memberships-pro' );?></a>.');
+			jQuery('#other_affiliate_code_p').html('Coach Referral Code: <?php echo $affiliate_code?><br><a id="other_affiliate_code_a" href="javascript:void(0);">');
 			jQuery('#other_affiliate_code_p').show();
 
 			jQuery('#other_affiliate_code_a').click(function() {
@@ -187,7 +187,7 @@
 		}
 
 		jQuery('#other_discount_code_tr').hide();
-		jQuery('#other_discount_code_p').html('<a id="other_discount_code_a" href="javascript:void(0);"><?php _e('Click here to change your discount code', 'paid-memberships-pro' );?></a>.');
+		jQuery('#other_discount_code_p').html('Discount Code: <?php echo $discount_code?><br><a id="other_discount_code_a" href="javascript:void(0);"><?php _e('Click here to change your discount code', 'paid-memberships-pro' );?></a>.');
 		jQuery('#other_discount_code_p').show();
 
 		jQuery('#other_discount_code_a').click(function() {

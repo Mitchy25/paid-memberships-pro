@@ -85,6 +85,15 @@ if($pmpro_msg)
 	?>
 </tbody>
 </table>
+
+<div>
+For each coach you refer to PBC, who purchases a PBC Coaches Licences, you receive a monthly 10% referral payment for the licences the coach purchases for a period of 12 months from the date the coach signs up to PBC, as long as the coach maintains an active PBC Coaches Licence. 
+<br><br>
+If you change your membership level to a Coach, you will continue to be paid referral income for any coaches you have referred to this date, who have purchased a PBC Coaches Licence. The payment for these referrals will continue to be paid under your existing agreement. Meaning referral payments will be made for your existing referrals until the 12-month expiration of the referred coaches sign-up date.
+<br><br>
+If you choose to change your membership level to a Coach, you are agreeing to the above. In addition, it will involve signing-up as a Coach and commencing your PBC Coaches Licence subscription. 
+</div>
+<br>
 <p class="<?php echo pmpro_get_element_class( 'pmpro_actions_nav' ); ?>">
 	<?php if( $has_any_level ) { ?>
 		<a href="<?php echo pmpro_url("account")?>" id="pmpro_levels-return-account"><?php _e('&larr; Return to Your Account', 'paid-memberships-pro' );?></a>

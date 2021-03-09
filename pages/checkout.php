@@ -21,7 +21,6 @@
 ?>
 
 <?php do_action('pmpro_checkout_before_form'); ?>
-
 <div id="pmpro_level-<?php echo $pmpro_level->id; ?>" class="<?php echo pmpro_get_element_class( $pmpro_checkout_gateway_class, 'pmpro_level-' . $pmpro_level->id ); ?>">
 <form id="pmpro_form" class="<?php echo pmpro_get_element_class( 'pmpro_form' ); ?>" action="<?php if(!empty($_REQUEST['review'])) echo pmpro_url("checkout", "?level=" . $pmpro_level->id); ?>" method="post">
 
@@ -57,7 +56,9 @@
 					
 					$clevel = $current_user->membership_level;
 					if (!$clevel){
-						printf(__('You are signing up as a <strong>%s</strong>.', 'paid-memberships-pro' ), $pmpro_level->name);
+						printf(__('You are signing up as a <strong>%s</strong>', 'paid-memberships-pro' ), $pmpro_level->name);
+					} else if ($clevel && ($clevel->name == "BDM" || $clevel->name == "Influencer")){
+						printf(__('You are upgrading to a <strong>%s</strong>', 'paid-memberships-pro' ), $pmpro_level->name);
 					} else if ($clevel->ID == 2) {
 						wp_redirect(home_url( '/membership-account'));
 					}
@@ -96,7 +97,7 @@
 							} else {
 								$affiliate_code = "";
 							}
-					    }
+						}
 						
 						echo wpautop(pmpro_getLevelCost($pmpro_level)); 
 					    echo wpautop(pmpro_getLevelExpiration($pmpro_level)); ?>
@@ -105,17 +106,16 @@
 
 				<?php do_action("pmpro_checkout_after_level_cost");?>
 				
-				<?php if ($pmpro_level->id == 1 && !$clevel) { ?>
+				<?php if (($pmpro_level->id == 1 && !$clevel) || ($clevel && ($current_user->membership_level->name == "BDM" || $current_user->membership_level->name == "Influencer"))) { ?>
 					<?php if($pmpro_show_discount_code) { ?>
 						<?php if($discount_code && !$pmpro_review) { ?>
-							<p id="other_discount_code_p" class="<?php echo pmpro_get_element_class( 'pmpro_small', 'other_discount_code_p' ); ?>"><a id="other_discount_code_a" href="#discount_code"><?php _e('Click here to change your discount code.', 'paid-memberships-pro' );?></a></p>
+							<p id="other_discount_code_p" class="<?php echo pmpro_get_element_class( 'pmpro_small', 'other_discount_code_p' ); ?>"><?php _e('Discount Code: ' . $discount_code, 'paid-memberships-pro' );?><br><a id="other_discount_code_a" href="#discount_code"><?php _e('Click here to change your discount code.', 'paid-memberships-pro' );?></a></p>
 						<?php } elseif(!$pmpro_review) { ?>
-							<p id="other_discount_code_p" class="<?php echo pmpro_get_element_class( 'pmpro_small', 'other_discount_code_p' ); ?>"><?php _e('Do you have a discount code?', 'paid-memberships-pro' );?> <a id="other_discount_code_a" href="#discount_code"><?php _e('Click here to enter your discount code', 'paid-memberships-pro' );?></a>.</p>
+							<p id="other_discount_code_p" class="<?php echo pmpro_get_element_class( 'pmpro_small', 'other_discount_code_p' ); ?>"><?php _e('Discount Code:', 'paid-memberships-pro' );?><br><a id="other_discount_code_a" href="#discount_code"><?php _e('Click here to enter a Discount Code.', 'paid-memberships-pro' );?></a></p>
 						<?php } elseif($pmpro_review && $discount_code) { ?>
 							<p><strong><?php _e('Discount Code', 'paid-memberships-pro' );?>:</strong> <?php echo $discount_code?></p>
 						<?php } ?>
 					<?php } ?>
-
 					<?php if($pmpro_show_discount_code) { ?>
 					<div id="other_discount_code_tr" style="display: none;">
 						<label for="other_discount_code"><?php _e('Discount Code', 'paid-memberships-pro' );?></label>
@@ -125,21 +125,31 @@
 					<?php } ?>
 				<?php } ?>
 						
-				<?php if ($pmpro_level->id == 1 && !$clevel) { ?>
+				<?php if ($pmpro_level->id == 1 && !$clevel || ($clevel && ($current_user->membership_level->name == "BDM" || $current_user->membership_level->name == "Influencer"))) { ?>
 						<?php if($affiliate_code && !$pmpro_review) { ?>
-							<p id="other_affiliate_code_p" class="<?php echo pmpro_get_element_class( 'pmpro_small', 'other_affiliate_code_p' ); ?>"><a id="other_affiliate_code_a" href="#affiliate_code"><?php _e('Click here to change your Affiliate Code.', 'paid-memberships-pro' );?></a></p>
+							<p id="other_affiliate_code_p" class="<?php echo pmpro_get_element_class( 'pmpro_small', 'other_affiliate_code_p' ); ?>"><?php _e('Coach Referral Code: ' . $affiliate_code, 'paid-memberships-pro' );?><br></p>
 						<?php } elseif(!$pmpro_review) { ?>
-							<p id="other_affiliate_code_p" class="<?php echo pmpro_get_element_class( 'pmpro_small', 'other_affiliate_code_p' ); ?>"><?php _e('Do you have an affiliate code?', 'paid-memberships-pro' );?> <a id="other_affiliate_code_a" href="#affiliate_code"><?php _e('Click here to enter your Affiliate Code', 'paid-memberships-pro' );?></a>.</p>
+							<p id="other_affiliate_code_p" class="<?php echo pmpro_get_element_class( 'pmpro_small', 'other_affiliate_code_p' ); ?>"><?php _e('Coach Referral Code:', 'paid-memberships-pro' );?><br><a id="other_affiliate_code_a" href="#affiliate_code"><?php _e('Click here to enter a Coach Referral Code', 'paid-memberships-pro' );?></a>.</p>
 						<?php } elseif($pmpro_review && $affiliate_code) { ?>
 							<p><strong><?php _e('Affilate Code', 'paid-memberships-pro' );?>:</strong> <?php echo $affiliate_code?></p>
 						<?php } ?>
 
 					<div id="other_affiliate_code_tr" style="display: none;">
-						<label for="other_affiliate_code"><?php _e('Affiliate Code', 'paid-memberships-pro' );?></label>
+						<label for="other_affiliate_code"><?php _e('Coach Referral Code', 'paid-memberships-pro' );?></label>
 						<input id="other_affiliate_code" name="other_affiliate_code" type="text" class="<?php echo pmpro_get_element_class( 'input pmpro_alter_price', 'other_affiliate_code' ); ?>" size="20" value="<?php echo esc_attr($affiliate_code); ?>" />
 						<input type="button" name="other_affiliate_code_button" id="other_affiliate_code_button" value="<?php _e('Apply', 'paid-memberships-pro' );?>" />
 					</div>
 				<?php } ?>
+				<script>
+					jQuery(document).ready(function(){
+						jQuery('#other_discount_code').on('blur',function(){
+							jQuery('#other_discount_code_button').click()
+						})
+						jQuery('#other_affiliate_code').on('blur',function(){
+							jQuery('#other_affiliate_code_button').click()
+						})
+					})
+				</script>
 			</div> <!-- end pmpro_checkout-fields -->
 		</div> <!-- end pmpro_pricing_fields -->
 		<?php
@@ -237,7 +247,7 @@
 		</div>  <!-- end pmpro_checkout-fields -->
 	</div> <!-- end pmpro_user_fields -->
 	<?php } elseif($current_user->ID && !$pmpro_review) { ?>
-		<div id="pmpro_account_loggedin" class="<?php echo pmpro_get_element_class( 'pmpro_message pmpro_alert', 'pmpro_account_loggedin' ); ?>">
+		<div style="display:none;" id="pmpro_account_loggedin" class="<?php echo pmpro_get_element_class( 'pmpro_message pmpro_alert', 'pmpro_account_loggedin' ); ?>">
 			<?php printf(__('You are logged in as <strong>%s</strong>. If you would like to use a different account for this membership, <a href="%s">log out now</a>.', 'paid-memberships-pro' ), $current_user->user_login, wp_logout_url($_SERVER['REQUEST_URI'])); ?>
 		</div> <!-- end pmpro_account_loggedin -->
 	<?php } ?>

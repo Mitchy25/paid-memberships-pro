@@ -76,7 +76,7 @@ fieldset[disabled] .pmpro_btn {
 	width: auto;
 }
 
-input[type="button"]#discount_code_button,
+/* input[type="button"]#discount_code_button,
 input[type="button"]#discount_code_button:hover,
 input[type="button"]#discount_code_button:focus,
 input[type="button"]#other_discount_code_button,
@@ -99,7 +99,7 @@ input[type="button"]#other_discount_code_button:focus {
 	text-align: center;
     text-decoration: underline;
 	text-transform: none;
-}
+} */
 
 /*---------------------------------------
 	Forms

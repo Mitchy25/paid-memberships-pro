@@ -1609,6 +1609,7 @@ class PMProGateway_stripe extends PMProGateway {
 
 		$this->clean_up( $order );
 		$order->status = 'success';
+		error_log("ProcessStripe");
 		$order->saveOrder();
 
 		return true;
@@ -2330,6 +2331,7 @@ class PMProGateway_stripe extends PMProGateway {
 		//save order so we know which plan to look for at stripe (order code = plan id)
 		$update_order->Gateway->clean_up( $update_order );
 		$update_order->status = "success";
+		error_log("Stripe Update");
 		$update_order->saveOrder();
 	}
 
@@ -2910,6 +2912,24 @@ class PMProGateway_stripe extends PMProGateway {
 			$trial_period_days = $order->BillingFrequency * 30;    //assume monthly
 		}
 
+		//Fix Trial Period Days
+		$payment_date = strtotime(date("Y-m-d", current_time("timestamp")));			
+		$payment_day = intval(date("j", current_time( "timestamp" )));
+		
+		//when would the next payment be	
+		if (isset($order->TrialBillingCycles)){
+			error_log($order->TrialBillingCycles);
+			$offsetAmount = $order->TrialBillingCycles + 1; //Account for first month delay too (+1) 
+		} else {
+			$offsetAmount = $order->BillingFrequency;
+		}
+
+		//when would the next payment be			
+		$next_payment_date = strtotime(date("Y-m-d", $payment_date) . " + " . $offsetAmount . " " . $order->BillingPeriod);
+				
+		//how many days in this period
+		$trial_period_days = ceil(($next_payment_date - $payment_date)/3600/24);
+
 		//convert to a profile start date
 		$order->ProfileStartDate = date_i18n( "Y-m-d", strtotime( "+ " . $trial_period_days . " Day", current_time( "timestamp" ) ) ) . "T0:0:0";
 
@@ -2920,26 +2940,26 @@ class PMProGateway_stripe extends PMProGateway {
 		$trial_period_days = ceil( abs( strtotime( date_i18n( "Y-m-d" ), current_time( "timestamp" ) ) - strtotime( $order->ProfileStartDate, current_time( "timestamp" ) ) ) / 86400 );
 
 		//for free trials, just push the start date of the subscription back
-		if ( ! empty( $order->TrialBillingCycles ) && $order->TrialAmount == 0 ) {
-			$trialOccurrences = (int) $order->TrialBillingCycles;
-			if ( $order->BillingPeriod == "Year" ) {
-				$trial_period_days = $trial_period_days + ( 365 * $order->BillingFrequency * $trialOccurrences );    //annual
-			} elseif ( $order->BillingPeriod == "Day" ) {
-				$trial_period_days = $trial_period_days + ( 1 * $order->BillingFrequency * $trialOccurrences );        //daily
-			} elseif ( $order->BillingPeriod == "Week" ) {
-				$trial_period_days = $trial_period_days + ( 7 * $order->BillingFrequency * $trialOccurrences );    //weekly
-			} else {
-				$trial_period_days = $trial_period_days + ( 30 * $order->BillingFrequency * $trialOccurrences );    //assume monthly
-			}
-		} elseif ( ! empty( $order->TrialBillingCycles ) ) {
+		// if ( ! empty( $order->TrialBillingCycles ) && $order->TrialAmount == 0 ) {
+		// 	$trialOccurrences = (int) $order->TrialBillingCycles;
+		// 	if ( $order->BillingPeriod == "Year" ) {
+		// 		$trial_period_days = $trial_period_days + ( 365 * $order->BillingFrequency * $trialOccurrences );    //annual
+		// 	} elseif ( $order->BillingPeriod == "Day" ) {
+		// 		$trial_period_days = $trial_period_days + ( 1 * $order->BillingFrequency * $trialOccurrences );        //daily
+		// 	} elseif ( $order->BillingPeriod == "Week" ) {
+		// 		$trial_period_days = $trial_period_days + ( 7 * $order->BillingFrequency * $trialOccurrences );    //weekly
+		// 	} else {
+		// 		$trial_period_days = $trial_period_days + ( 30 * $order->BillingFrequency * $trialOccurrences );    //assume monthly
+		// 	}
+		// } elseif ( ! empty( $order->TrialBillingCycles ) ) {
 
-		}
+		// }
 
 		global $current_user;
 
 		//get current plan at Stripe to get payment date
 		$last_order = new MemberOrder();
-		$last_order->getLastMemberOrder($current_user->ID);
+		$last_order->getLastMemberOrder($current_user->ID, array('success', '','cancelled'),$order->membership_id);
 		$last_order->setGateway( 'stripe' );
 		$last_order->Gateway->getCustomer( $last_order );
 
@@ -2951,18 +2971,18 @@ class PMProGateway_stripe extends PMProGateway {
 			
 			//convert back to days
 			$trial_period_days = ceil( abs( strtotime( date_i18n( "Y-m-d" ), current_time( "timestamp" ) ) - strtotime( $orderStartDate, current_time( "timestamp" ) ) ) / 86400 );
-
 		}
 		
 		// Save $trial_period_days to order for now too.
 		$order->TrialPeriodDays = $trial_period_days;
 		$seatHash = $order->seat_hash;
 
-		if ($order->newSeats){
+		if (isset($order->newSeats)){
 			$seatHash = uniqid('PBCSeatOrder_', true );
 			$order->seat_hash = $seatHash;
 			$seatString = " - Seats [Original/New/Current] [" . $order->oldSeats . "/" . $order->additionalSeats . "/" . $order->newSeats ."]";
-		} elseif ($seatHash){
+			add_option($order->seat_hash, array('currentSeats'=>$order->newSeats, 'originalSeats'=>$order->oldSeats , 'newSeats'=>$order->additionalSeats));
+		} elseif (isset($seatHash)){
 			//Get Seat Details
 			$seatArray = get_option($seatHash);
 			$currentSeats = $seatArray['currentSeats'];

@@ -4,9 +4,168 @@ global $post, $gateway, $wpdb, $besecure, $discount_code, $discount_code_id, $pm
 // we are on the checkout page
 add_filter( 'pmpro_is_checkout', '__return_true' );
 
+add_action( 'template_redirect', 'redirectIfNotRequired');
+
+function redirectIfNotRequired(){
+	global $current_user, $pmpro_checkout_level_ids;
+	//redirect to membership
+	$rurl = pmpro_url( "account");
+	$membershipStatus = get_user_meta($current_user->ID,'pauseStatus');
+
+	//Check if alreadys signed up and not getting more seats
+	if ($current_user->ID && !isset($_REQUEST['seats'])){ 
+		if (isset($current_user->membership_level->name)){
+			if ($current_user->membership_level->name == "Coach" || $current_user->membership_level->name == "Client") {
+				wp_redirect( $rurl );
+				exit(0);
+			}
+		}
+	}
+
+	if (isset($_REQUEST['level']) && ($_REQUEST['level'] == 7 || $_REQUEST['level'] == 8)){
+		if (!isset($_REQUEST['adminSignup']) || $_REQUEST['adminSignup'] != "IDA1F9"){
+			wp_redirect( $rurl );
+			exit(0);
+		}
+	}
+
+	if ($membershipStatus){
+		wp_redirect( $rurl );
+		exit(0);
+	}
+
+	if ($current_user->ID && (isset($_REQUEST['discount_code']) || isset($_REQUEST['affiliate_code']))){
+		wp_redirect( $rurl );
+		exit(0);
+	}
+
+	//Check if Discount Code is all used
+	if (isset($_REQUEST['discount_code'])){
+		$discount_code = preg_replace( "/[^A-Za-z0-9\-]/", "", $_REQUEST['discount_code'] );	
+		$pmpro_level = pmpro_getLevelAtCheckout();
+		if ( isset( $pmpro_checkout_level_ids ) ) {
+			$code_check = pmpro_checkDiscountCode( $discount_code, $pmpro_checkout_level_ids, true );
+		} else {
+			if (!empty( $pmpro_level->id )){
+				$code_check = pmpro_checkDiscountCode( $discount_code, $pmpro_level->id, true );
+			} else {
+				$code_check = pmpro_checkDiscountCode( $discount_code, null, true );
+			}
+			
+		}
+
+		if (isset($_REQUEST['bemail'])){
+			$bemail = $_REQUEST['bemail'];
+		} else {
+			$bemail;
+		}
+
+		if ( $code_check[0] == false && $code_check[1] == "This discount code is no longer valid.") {
+			if ($bemail){
+				wp_redirect("https://poweredbychange.com/client-licences-required?discount_code=" . $discount_code. "&bemail=" . $bemail);
+			} else {
+				wp_redirect("https://poweredbychange.com/client-licences-required?discount_code=" . $discount_code);
+			}
+			exit(0);
+		}
+	}
+
+	
+}
+
+
 //make sure we know current user's membership level
 if ( $current_user->ID ) {
 	$current_user->membership_level = pmpro_getMembershipLevelForUser( $current_user->ID );
+}
+
+if (isset($current_user->membership_level->name) && ($current_user->membership_level->name == "Coach" || $current_user->membership_level->name == "Client")){
+		//Hide Coach and Client Signup (This is seat purchase)
+	?>
+	<style>
+		#checkout-title-1 {
+			display:none;
+		}
+		#checkout-title-3 {
+			display:none;
+		}
+		#checkout-header {
+			display:none;
+		}
+	</style>
+	<?php
+} elseif (isset($_REQUEST['discount_code']) && isset($_REQUEST['level'])){
+	if ($_REQUEST['level'] == 2){
+		//Hide Coach Signup and Seat Purchase (This is client Signup)
+		?>
+		<style>
+			#checkout-title-2 {
+				display:none;
+			}
+			#checkout-title-1 {
+				display:none;
+			}
+			#checkout-header {
+				display:none;
+			}
+		</style>
+		<?php
+	}
+} elseif (isset($_REQUEST['level'])) {
+	if ($_REQUEST['level'] == 7 || $_REQUEST['level'] == 8) {
+		//Influence or BDM Signup (Use Checkout Title for Now)
+		
+	?>
+	<style>
+		#checkout-title-1 {
+			display:none;
+		}
+		#checkout-title-3 {
+			display:none;
+		}
+		#checkout-header {
+			display:none;
+		}
+	</style>
+	<?php
+	} elseif (isset($current_user->membership_level->name) && (($current_user->membership_level->name == "Influencer" || $current_user->membership_level->name == "BDM") && $_REQUEST['level'] == 1)){
+		//Upgrade from Influencer/BDM to Coach
+		?>
+		<style>
+			#checkout-title-2 {
+				display:none;
+			}
+			#checkout-title-3 {
+				display:none;
+			}
+
+		</style>
+		<?php
+	} elseif ($_REQUEST['level'] == 1){
+		//Hide Seat Purchase and Client Signup (This is Coach Signup)
+		?>
+		<style>
+			#checkout-title-2 {
+				display:none;
+			}
+			#checkout-title-3 {
+				display:none;
+			}
+		</style>
+		<?php
+	}
+} else {
+	//Hide Seat Purchase and Client Signup (This is Coach Signup)
+	?>
+	<style>
+		#checkout-title-2 {
+			display:none;
+		}
+		#checkout-title-3 {
+			display:none;
+		}
+	</style>
+	<?php
 }
 
 //this var stores fields with errors so we can make them red on the frontend
@@ -57,8 +216,8 @@ $pmpro_level = pmpro_getLevelAtCheckout();
 do_action( 'pmpro_checkout_preheader_after_get_level_at_checkout', $pmpro_level );
 
 if ( empty( $pmpro_level->id ) ) {
-	wp_redirect( pmpro_url( "levels" ) );
-	exit( 0 );
+	//wp_redirect( pmpro_url( "levels" ) );
+	//exit( 0 );
 }
 
 //enqueue some scripts
@@ -115,7 +274,7 @@ if ( $tospage ) {
 }
 
 //load em up (other fields)
-global $affiliate_id, $affiliate_code, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth, $ExpirationYear;
+global $seats, $newSeats, $originalSeats, $affiliate_id, $affiliate_code, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth, $ExpirationYear;
 
 if ( isset( $_REQUEST['order_id'] ) ) {
 	$order_id = intval( $_REQUEST['order_id'] );
@@ -279,6 +438,8 @@ if ( isset( $_REQUEST['affiliate_code'] ) ) {
 
 $submit = pmpro_was_checkout_form_submitted();
 
+redirectIfNotRequired();
+
 /**
  * Hook to run actions after the parameters are set on the checkout page.
  * @since 2.1
@@ -362,6 +523,7 @@ if ( $submit && $pmpro_msgt != "pmpro_error" ) {
 		$pmpro_error_fields[] = "password";
 		$pmpro_error_fields[] = "password2";
 	}
+
 	if ( strcasecmp($bemail, $bconfirmemail) !== 0 ) {
 		pmpro_setMessage( __( "Your email addresses do not match. Please try again.", 'paid-memberships-pro' ), "pmpro_error" );
 		$pmpro_error_fields[] = "bemail";
@@ -460,6 +622,13 @@ if ( $submit && $pmpro_msgt != "pmpro_error" ) {
 				//process checkout if required
 				if ( $pmpro_requirebilling ) {
 					$morder = pmpro_build_order_for_checkout();
+
+					//Add Seat Hash
+					if ($seats){
+						// $newSeats = $number_of_seats - $originalSeats;
+						$morder->seat_hash = uniqid('PBCSeatOrder_', true );
+						add_option($morder->seat_hash, array('currentSeats'=>$seats, 'originalSeats'=>$originalSeats, 'newSeats'=>$newSeats));
+					}
 
 					$pmpro_processed = $morder->process();
 
@@ -686,25 +855,43 @@ if ( ! empty( $pmpro_confirmed ) ) {
 				$morder->membership_id = $pmpro_level->id;  
 				
 				//Add Seat Hash
-				if ($seats){
-					// $newSeats = $number_of_seats - $originalSeats;
-					$morder->seat_hash = uniqid('PBCSeatOrder_', true );
-					add_option($morder->seat_hash, array('currentSeats'=>$seats, 'originalSeats'=>$originalSeats, 'newSeats'=>$newSeats));
-				}
+				// if ($seats){
+				// 	// $newSeats = $number_of_seats - $originalSeats;
+				// 	$morder->seat_hash = uniqid('PBCSeatOrder_', true );
+				// 	add_option($morder->seat_hash, array('currentSeats'=>$seats, 'originalSeats'=>$originalSeats, 'newSeats'=>$newSeats));
+				// 	error_log("HASH: " .$morder->seat_hash);
+				// }
 
 				//Add Affiliate ID after User ID is available
-				add_user_meta($user_id,"affiliateCode",$morder->affiliate_id);
-				//add affiliate code use (If first time only)
-				if ($morder->affiliate_id) {
-					//Get Affilidate Code ID
-					$affiliate_code_id = $wpdb->get_var( "SELECT id FROM $wpdb->pmpro_discount_codes WHERE code = '" . esc_sql( $morder->affiliate_id ) . "' LIMIT 1" );
-					if ( ! empty( $morder->id ) ) {
-						$code_order_id = $morder->id;
-					} else {
-						$code_order_id = "";
+				if (isset($morder->affiliate_id)){
+					add_user_meta($user_id,"affiliateCode",$morder->affiliate_id);
+
+					//Lookup Owner of Affiliate Code and check their Memmbership ID (Want to add Expiry for BDM and Influencers)
+					$code = $morder->affiliate_id;
+					//Lookup Code to get ID
+					$code_id = $wpdb->get_var( "SELECT id FROM $wpdb->pmpro_discount_codes WHERE code = '" . esc_sql( $morder->affiliate_id ) . "' LIMIT 1" );
+					$code_user_ids = get_option( 'pmpro_code_user_ids' );
+					$parentUser = $code_user_ids[$code_id];
+					$userMeta = get_userdata( $parentUser);
+					$user_roles = $userMeta->roles;
+    				if ( in_array( 'influencer', $user_roles, true ) ||  in_array( 'bdm', $user_roles, true ) ) {
+						$futureDate=date('Y-m-d', strtotime('+1 year'));
+						add_user_meta($user_id,'affiliateCodeExpiry',$futureDate);
 					}
-					$wpdb->query( "INSERT INTO $wpdb->pmpro_discount_codes_uses (code_id, user_id, order_id, timestamp) VALUES('" . $affiliate_code_id . "', '" . $user_id . "', '" . intval( $code_order_id ) . "', '" . current_time( "mysql" ) . "')" );
+
+					//add affiliate code use (If first time only)
+					if ($morder->affiliate_id) {
+						//Get Affilidate Code ID
+						$affiliate_code_id = $wpdb->get_var( "SELECT id FROM $wpdb->pmpro_discount_codes WHERE code = '" . esc_sql( $morder->affiliate_id ) . "' LIMIT 1" );
+						if ( ! empty( $morder->id ) ) {
+							$code_order_id = $morder->id;
+						} else {
+							$code_order_id = "";
+						}
+						$wpdb->query( "INSERT INTO $wpdb->pmpro_discount_codes_uses (code_id, user_id, order_id, timestamp) VALUES('" . $affiliate_code_id . "', '" . $user_id . "', '" . intval( $code_order_id ) . "', '" . current_time( "mysql" ) . "')" );
+					}
 				}
+				
 				$morder->saveOrder();
 			}
 
@@ -724,7 +911,7 @@ if ( ! empty( $pmpro_confirmed ) ) {
 				}
 
 				$wpdb->query( "INSERT INTO $wpdb->pmpro_discount_codes_uses (code_id, user_id, order_id, timestamp) VALUES('" . $discount_code_id . "', '" . $user_id . "', '" . intval( $code_order_id ) . "', '" . current_time( "mysql" ) . "')" );
-        do_action( 'pmpro_discount_code_used', $code_id, $user_id, $order_id );
+        		do_action( 'pmpro_discount_code_used', $code_id, $user_id, $order_id );
 			}
 
 			//save billing info ect, as user meta
@@ -794,9 +981,11 @@ if ( ! empty( $pmpro_confirmed ) ) {
 				}
 				$current_user->membership_level = $pmpro_level; //make sure they have the right level info
 
-				//send email to member
-				$pmproemail = new PMProEmail();
-				$pmproemail->sendCheckoutEmail( $current_user, $invoice );
+				if ($current_user->membership_level->name == "Coach" || $current_user->membership_level->name == "Client" || $current_user->membership_level->name == "BDM"){
+					//send email to member
+					$pmproemail = new PMProEmail();
+					$pmproemail->sendCheckoutEmail( $current_user, $invoice );
+				}
 
 				//send email to admin
 				$pmproemail = new PMProEmail();

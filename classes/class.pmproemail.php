@@ -157,9 +157,25 @@
 				$this->headers[] = 'From:' . $this->from;
 			}
 		}
+
+		function sendCertificateEmail($user = NULL, $certificateLink = NULL){
+			global $wpdb, $current_user;
+			if(!$user)
+				$user = $current_user;
+			
+			if(!$user)
+				return false;
+			
+			$this->email = $user->user_email;
+			$this->subject = sprintf(__('Your PBC Training Certificate', 'paid-memberships-pro'), get_option("blogname"));
+
+			$this->data = array("user_email" => $user->user_email, "display_name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"), "certificateLink"=>$certificateLink);
+
+			$this->template = apply_filters("pmpro_email_template", "certificate", $this);
+			return $this->sendEmail();
+		}
 		
-		function sendCancelEmail($user = NULL, $old_level_id = NULL)
-		{
+		function sendCancelEmail($user = NULL, $old_level_id = NULL){
 			global $wpdb, $current_user;
 			if(!$user)
 				$user = $current_user;
@@ -183,6 +199,77 @@
 			}
 
 			$this->template = apply_filters("pmpro_email_template", "cancel", $this);
+			return $this->sendEmail();
+		}
+
+		function sendClientCancelEmailToCoach($user = NULL, $old_level_id = NULL, $deleteUserID = NULL){
+			global $wpdb, $current_user;
+			if(!$user)
+				$user = $current_user;
+			
+			if(!$user)
+				return false;
+			
+			$this->email = $user->user_email;
+			$this->subject = sprintf(__('Your clients membership at %s has been cancelled', 'paid-memberships-pro'), get_option("blogname"));
+
+			//Get Client
+			$client = get_user_by('id',$deleteUserID);
+
+			$this->data = array("client_membership_id"=>2,"client_membership_level_name"=>"Client", "user_email" => $user->user_email, "client_email"=>$client->user_email, "client_display_name" => $client->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"));
+
+			$this->template = apply_filters("pmpro_email_template", "coach_client_cancelled", $this);
+			return $this->sendEmail();
+		}
+
+		function sendCoachCancelEmail($user = NULL, $old_level_id = NULL){
+			global $wpdb, $current_user;
+			if(!$user)
+				$user = $current_user;
+			
+			if(!$user)
+				return false;
+			
+			$this->email = $user->user_email;
+			$this->subject = sprintf(__('Your membership at %s has been cancelled', 'paid-memberships-pro'), get_option("blogname"));
+
+			$this->data = array("membership_id"=>1,"membership_level_name"=>"Coach", "user_email" => $user->user_email, "display_name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"));
+
+			$this->template = apply_filters("pmpro_email_template", "coach_cancelled", $this);
+			return $this->sendEmail();
+		}
+
+		function sendMembershipPausedEmail($user = NULL){
+			global $wpdb, $current_user;
+			if(!$user)
+				$user = $current_user;
+			
+			if(!$user)
+				return false;
+			
+			$this->email = $user->user_email;
+			$this->subject = sprintf(__('Your membership at %s has been paused', 'paid-memberships-pro'), get_option("blogname"));
+
+			$this->data = array("membership_id"=>1,"membership_level_name"=>"Coach", "user_email" => $user->user_email, "display_name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"));
+
+			$this->template = apply_filters("pmpro_email_template", "membership_paused", $this);
+			return $this->sendEmail();
+		}
+
+		function sendMembershipResumedEmail($user = NULL){
+			global $wpdb, $current_user;
+			if(!$user)
+				$user = $current_user;
+			
+			if(!$user)
+				return false;
+			
+			$this->email = $user->user_email;
+			$this->subject = sprintf(__('Your membership at %s has been resume', 'paid-memberships-pro'), get_option("blogname"));
+
+			$this->data = array("membership_id"=>1,"membership_level_name"=>"Coach", "user_email" => $user->user_email, "display_name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"));
+
+			$this->template = apply_filters("pmpro_email_template", "membership_resumed", $this);
 			return $this->sendEmail();
 		}
 		
@@ -269,9 +356,9 @@
 								"user_email" => $user->user_email,								
 							);						
 			if(!empty($invoice) && !pmpro_isLevelFree($user->membership_level))	{						
-				if($invoice->gateway == "paypalexpress")
+				if($invoice->gateway == "paypalexpress"){
 					$this->template = "checkout_express";
-				elseif($invoice->gateway == "check"){
+				} elseif($invoice->gateway == "check"){
 					$this->template = "checkout_check";
 					$this->data["instructions"] = wpautop(pmpro_getOption("instructions"));
 				} elseif(pmpro_isLevelTrial($user->membership_level)){
@@ -279,7 +366,7 @@
 				} elseif (substr($invoice->notes,0,13) == "PBCSeatOrder_" && $invoice->total > 0) {
 					//Adding Seats
 					$this->template = "checkout_paid_add_seats";
-					$seatArray = get_option($seatHash);
+					$seatArray = get_option($invoice->notes);
 					$currentSeats = $seatArray['currentSeats'];
 					$originalSeats = $seatArray['originalSeats'];
 					$newSeats = $seatArray['newSeats'];
@@ -328,12 +415,20 @@
 				else
 					$this->data["discount_code"] = "";
 			}	elseif(pmpro_isLevelFree($user->membership_level))	{
-				$this->template = "checkout_free";		
-				global $discount_code;
-				if(!empty($discount_code))
-					$this->data["discount_code"] = "<p>" . __("Discount Code", 'paid-memberships-pro' ) . ": " . $discount_code . "</p>\n";		
-				else
-					$this->data["discount_code"] = "";		
+				if ($user->membership_level->name=="BDM"){
+					//BDM
+					$this->template = "checkout_free_bdm";		
+				} else {
+					//Client
+					$this->template = "checkout_free";		
+					global $discount_code;
+					if(!empty($discount_code)){
+						$this->data["discount_code"] = "<p>" . __("Discount Code", 'paid-memberships-pro' ) . ": " . $discount_code . "</p>\n";		
+					} else {
+						$this->data["discount_code"] = "";		
+					}
+				}
+				
 			} else	{
 				$this->template = "checkout_freetrial";
 				global $discount_code;
