@@ -414,6 +414,16 @@ select.pmpro_error {
 .pmpro_invoice_details .pmpro_invoice-billing-address,
 .pmpro_invoice_details .pmpro_invoice-payment-method {
 	padding-right: 10px;
+
+}
+.pmpro_invoice-field-billing_name,
+.pmpro_invoice-field-billing_street,
+.pmpro_invoice-field-billing_country,
+.pmpro_invoice-field-billing_phone {
+	display: block;
+}
+.pmpro_invoice-field-billing_city:after {
+	content: ',';
 }
 
 /*---------------------------------------
@@ -703,4 +713,3 @@ li.pmpro_more {
 	.pmpro_invoice_details {
 		display: block;
 	}
-}

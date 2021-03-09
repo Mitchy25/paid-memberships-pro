@@ -3,7 +3,7 @@
  * Plugin Name: Paid Memberships Pro - PBC
  * Plugin URI: https://techsquid.co.nz
  * Description: PBC Customised PMP.
- * Version: 2.5.4
+ * Version: 2.5.6
  * Author: TechSquid
  * Author URI: https://techsquid.co.nz
  * Text Domain: paid-memberships-pro
@@ -16,7 +16,7 @@
  */
 
 // version constant
-define( 'PMPRO_VERSION', '2.5.4' );
+define( 'PMPRO_VERSION', '2.5.6' );
 define( 'PMPRO_USER_AGENT', 'Paid Memberships Pro v' . PMPRO_VERSION . '; ' . site_url() );
 define( 'PMPRO_MIN_PHP_VERSION', '5.6' );
 
