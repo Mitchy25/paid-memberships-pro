@@ -10,6 +10,7 @@ function redirectIfNotRequired(){
 	global $current_user, $pmpro_checkout_level_ids;
 	//redirect to membership
 	$rurl = pmpro_url( "account");
+	$membershipStatus = get_user_meta($current_user->ID,'pauseStatus');
 
 	//Check if alreadys signed up and not getting more seats
 	if ($current_user->ID && !isset($_REQUEST['seats'])){ 
@@ -26,6 +27,11 @@ function redirectIfNotRequired(){
 			wp_redirect( $rurl );
 			exit(0);
 		}
+	}
+
+	if ($membershipStatus){
+		wp_redirect( $rurl );
+		exit(0);
 	}
 
 	if ($current_user->ID && (isset($_REQUEST['discount_code']) || isset($_REQUEST['affiliate_code']))){
@@ -431,6 +437,8 @@ if ( isset( $_REQUEST['affiliate_code'] ) ) {
 }
 
 $submit = pmpro_was_checkout_form_submitted();
+
+redirectIfNotRequired();
 
 /**
  * Hook to run actions after the parameters are set on the checkout page.
@@ -857,6 +865,20 @@ if ( ! empty( $pmpro_confirmed ) ) {
 				//Add Affiliate ID after User ID is available
 				if (isset($morder->affiliate_id)){
 					add_user_meta($user_id,"affiliateCode",$morder->affiliate_id);
+
+					//Lookup Owner of Affiliate Code and check their Memmbership ID (Want to add Expiry for BDM and Influencers)
+					$code = $morder->affiliate_id;
+					//Lookup Code to get ID
+					$code_id = $wpdb->get_var( "SELECT id FROM $wpdb->pmpro_discount_codes WHERE code = '" . esc_sql( $morder->affiliate_id ) . "' LIMIT 1" );
+					$code_user_ids = get_option( 'pmpro_code_user_ids' );
+					$parentUser = $code_user_ids[$code_id];
+					$userMeta = get_userdata( $parentUser);
+					$user_roles = $userMeta->roles;
+    				if ( in_array( 'influencer', $user_roles, true ) ||  in_array( 'bdm', $user_roles, true ) ) {
+						$futureDate=date('Y-m-d', strtotime('+1 year'));
+						add_user_meta($user_id,'affiliateCodeExpiry',$futureDate);
+					}
+
 					//add affiliate code use (If first time only)
 					if ($morder->affiliate_id) {
 						//Get Affilidate Code ID

@@ -40,6 +40,7 @@
 		pmpro_stripeWebhookExit();
 	}
 
+	error_log(json_encode(file_get_contents('php://input')));
 	// retrieve the request's body and parse it as JSON
 	if(empty($_REQUEST['event_id']))
 	{
@@ -338,9 +339,7 @@
 					$logstr .= " Customer ID #" . $pmpro_stripe_event->data->object->customer . ".";
 				pmpro_stripeWebhookExit();
 			}
-		}
-		elseif($pmpro_stripe_event->type == "customer.subscription.deleted")
-		{
+		} elseif($pmpro_stripe_event->type == "customer.subscription.deleted"){
 			//for one of our users? if they still have a membership for the same level, cancel it
 			$old_order = getOldOrderFromInvoiceEvent($pmpro_stripe_event);
 
@@ -385,8 +384,10 @@
 						$logstr .= "Cancelled membership for user with id = {$old_order->user_id}. Subscription transaction id = {$old_order->subscription_transaction_id}.\n";
 						
 						//send an email to the member
-						$myemail = new PMProEmail();
-						$myemail->sendCancelEmail( $user, $old_order->membership_id );
+						if ($old_order->membership_id != 7 && $old_order->membership_id != 8){
+							$myemail = new PMProEmail();
+							$myemail->sendCancelEmail( $user, $old_order->membership_id );
+						}
 						
 						//send an email to the admin
 						$myemail = new PMProEmail();

@@ -262,6 +262,16 @@
 			if(!$user_id)
 				return false;
 
+			//If Membership ID is null, get last Order with SAME membership ID. This will reset upgrades
+			// if ($membership_id == NULL){
+			// 	$user_level = pmpro_getMembershipLevelForUser( $user_id );
+			// 	if (isset($user_level)){
+			// 		$membership_id = $user_level->id;
+			// 	}
+			// }
+
+			// error_log($membership_id);
+
 			//build query
 			$this->sqlQuery = "SELECT id FROM $wpdb->pmpro_membership_orders WHERE user_id = '" . $user_id . "' ";
 			if(!empty($status) && is_array($status))
@@ -294,8 +304,8 @@
 			if(!$user_id)
 				return false;
 
-			//build query
-			$this->sqlQuery = "SELECT id FROM $wpdb->pmpro_membership_orders WHERE user_id = '" . $user_id . "' AND notes = '' ORDER BY timestamp ASC LIMIT 1";
+			//build query (Get first COACH order)
+			$this->sqlQuery = "SELECT id FROM $wpdb->pmpro_membership_orders WHERE user_id = '" . $user_id . "' AND notes = '' AND membership_id = 1 ORDER BY timestamp ASC LIMIT 1";
 
 			//get id
 			$id = $wpdb->get_var($this->sqlQuery);

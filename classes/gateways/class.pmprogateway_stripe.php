@@ -2959,7 +2959,7 @@ class PMProGateway_stripe extends PMProGateway {
 
 		//get current plan at Stripe to get payment date
 		$last_order = new MemberOrder();
-		$last_order->getLastMemberOrder($current_user->ID);
+		$last_order->getLastMemberOrder($current_user->ID, array('success', '','cancelled'),$order->membership_id);
 		$last_order->setGateway( 'stripe' );
 		$last_order->Gateway->getCustomer( $last_order );
 

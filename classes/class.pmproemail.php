@@ -238,6 +238,40 @@
 			$this->template = apply_filters("pmpro_email_template", "coach_cancelled", $this);
 			return $this->sendEmail();
 		}
+
+		function sendMembershipPausedEmail($user = NULL){
+			global $wpdb, $current_user;
+			if(!$user)
+				$user = $current_user;
+			
+			if(!$user)
+				return false;
+			
+			$this->email = $user->user_email;
+			$this->subject = sprintf(__('Your membership at %s has been paused', 'paid-memberships-pro'), get_option("blogname"));
+
+			$this->data = array("membership_id"=>1,"membership_level_name"=>"Coach", "user_email" => $user->user_email, "display_name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"));
+
+			$this->template = apply_filters("pmpro_email_template", "membership_paused", $this);
+			return $this->sendEmail();
+		}
+
+		function sendMembershipResumedEmail($user = NULL){
+			global $wpdb, $current_user;
+			if(!$user)
+				$user = $current_user;
+			
+			if(!$user)
+				return false;
+			
+			$this->email = $user->user_email;
+			$this->subject = sprintf(__('Your membership at %s has been resume', 'paid-memberships-pro'), get_option("blogname"));
+
+			$this->data = array("membership_id"=>1,"membership_level_name"=>"Coach", "user_email" => $user->user_email, "display_name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"));
+
+			$this->template = apply_filters("pmpro_email_template", "membership_resumed", $this);
+			return $this->sendEmail();
+		}
 		
 		function sendCancelAdminEmail($user = NULL, $old_level_id = NULL)
 		{

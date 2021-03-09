@@ -363,7 +363,7 @@ jQuery(document).ready(function(){
 			referralLink.replace('"','');
 			var coachName = "<?php echo $current_user->user_firstname . " " . $current_user->user_lastname?>"
 			var coachEmail = "<?php echo $current_user->user_email ?>"
-			var emailCopy = "<br>Hi " + name +",<br><br>I’ve just become a PBC coach. Here’s my referral link you can use to do the same: <a href='" + referralLink + "'>Link</a><br><br>To find out how PBC can enhance your business coaching and generate an income stream, check out the <a href='https://poweredbychange.com'>Powered By Change</a> website as well as the <a href='https://youtu.be/moWYXA9FghE'>coaches revenue video</a> for more information on the benefits for you.<br><br>Feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
+			var emailCopy = "<br>Hi " + name +",<br><br>I’ve just become a PBC coach. Here’s my referral link you can use to do the same: <a href='" + referralLink + "'>Link</a><br><br>To find out how PBC can enhance your business coaching and generate an income stream, check out the <a href='https://poweredbychange.com/coaches-home/'>Powered By Change</a> website as well as the <a href='https://youtu.be/moWYXA9FghE'>coaches revenue video</a> for more information on the benefits for you.<br><br>Feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
 
 			jQuery('#messageContents').html(emailCopy);
 		}

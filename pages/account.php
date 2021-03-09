@@ -22,6 +22,8 @@
 	//Extract the user-defined sections for the shortcode
 	$sections = array_map('trim',explode(",",$sections));	
 	ob_start();
+
+	$membershipStatus = get_user_meta($current_user->ID,'pauseStatus');
 	
 	//if a member is logged in, show them some info here (1. past invoices. 2. billing information with button to update.)
 	if(pmpro_hasMembershipLevel()){
@@ -44,7 +46,9 @@
 					<thead>
 						<tr>
 							<th><?php _e("Level", 'buddyboss-theme' );?></th>
-							<th><?php _e("Billing", 'buddyboss-theme' ); ?></th>
+							<th><?php _e("Actions", 'buddyboss-theme' ); ?></th>
+							<th><?php _e("Status", 'buddyboss-theme' );?></th>
+							<!-- <th><?php //_e("Billing", 'buddyboss-theme' ); ?></th> -->
 							<th><?php _e("Expiration", 'buddyboss-theme' ); ?></th>
 						</tr>
 					</thead>
@@ -55,7 +59,9 @@
 						<tr>
 							<td class="pmpro_account-membership-levelname">
 								<?php echo $level->name?>
-								<div class="pmpro_actionlinks">
+							</td>
+							<td>
+							<div class="pmpro_actionlinks">
 									<?php do_action("pmpro_member_action_links_before"); ?>
 									
 									<?php if( array_key_exists($level->id, $pmpro_levels) && pmpro_isLevelExpiringSoon( $level ) ) { ?>
@@ -63,30 +69,115 @@
 									<?php } ?>
 
 									<?php if((isset($ssorder->status) && $ssorder->status == "success") && (isset($ssorder->gateway) && in_array($ssorder->gateway, array("authorizenet", "paypal", "stripe", "braintree", "payflow", "cybersource"))) && pmpro_isLevelRecurring($level)) { ?>
-										<a id="pmpro_actionlink-update-billing" href="<?php echo pmpro_url("billing", "", "https")?>"><?php _e("Update Billing Info", 'buddyboss-theme' ); ?></a>
+										<a id="pmpro_actionlink-update-billing" href="<?php echo pmpro_url("billing", "", "https")?>"><?php _e("Update Billing Info", 'buddyboss-theme' ); ?></a><br>
+									<?php } ?>
+									<?php if ($level->name != "Client"){ ?>
+										<a id="changePayoutLocation" href="<?php echo 'payouts'; ?>"><?php _e("Change Referral Account", 'buddyboss-theme' );?></a>
+									<?php } ?>
+									<?php 
+										//To do: Only show CHANGE link if this level is in a group that has upgrade/downgrade rules
+										if(count($pmpro_levels) > 1 && !defined("PMPRO_DEFAULT_LEVEL") && $level->id > 2) { ?>
+										<br><a id="pmpro_actionlink-change" href="<?php echo pmpro_url("levels")?>" id="pmpro_account-change"><?php _e("Change Membership", 'buddyboss-theme' );?></a>
 									<?php } ?>
 									
 									<?php 
-										//To do: Only show CHANGE link if this level is in a group that has upgrade/downgrade rules
-										if(count($pmpro_levels) > 1 && !defined("PMPRO_DEFAULT_LEVEL")) { ?>
-										<a id="pmpro_actionlink-change" href="<?php echo pmpro_url("levels")?>" id="pmpro_account-change"><?php _e("Change", 'buddyboss-theme' );?></a>
-									<?php } ?>
-									<br>
-									<a id="pmpro_actionlink-cancel" href="<?php echo pmpro_url("cancel", "?levelstocancel=" . $level->id)?>"><?php _e("Cancel Membership", 'buddyboss-theme' );?></a>
+										if ($level->id == 1){
+											//Membership Pause only available to Coaches
+											$member_ids = [];
+											$codes = get_option("pmpro_code_user_ids");
+											$user_id = $current_user->ID;
+											$codeList = array();
+											if(is_array($codes)) {
+												foreach($codes as $code_id => $code_user_id) {
+													if($code_user_id == $user_id){
+														array_push($codeList,$code_id);
+													}
+												}
+											}
+											$code_urls = array();
+
+											foreach ($codeList as $code){
+												$codeLevel = $wpdb->get_var("SELECT level_id FROM $wpdb->pmpro_discount_codes_levels WHERE code_id = '" . esc_sql($code) . "' LIMIT 1");
+												$codeValue = $wpdb->get_var("SELECT code FROM $wpdb->pmpro_discount_codes WHERE id = '" . esc_sql($code) . "' LIMIT 1");
+												$codeUses = $wpdb->get_var("SELECT uses FROM $wpdb->pmpro_discount_codes WHERE id = '" . esc_sql($code) . "' LIMIT 1");
+												if ($codeLevel == 1){
+													$codeName = "Coach";
+													$code_id = $code;
+												} else {
+													$codeName = "Client";
+												}
+												if ($codeName == "Client"){
+													$codeType = "discount_code";
+												} else {
+													$codeType = "affiliate_code";
+												}
+												array_push($code_urls,array("name"=>$codeName,"level"=>$codeLevel,"uses"=>$codeUses,"id"=>$code,"codeValue"=>$codeValue,"url"=>pmpro_url("checkout", "?level=" . $codeLevel . "&" . $codeType . "=" . $codeValue)));
+											}
+											
+											//Initiate for coaches who haven't purchases license yet
+											$codeUses = 0;
+											foreach($code_urls as $code_url) {
+												if ($code_url['level'] == 2){
+													// $clientCodeID = $code_url['id'];
+													// $member_ids = $wpdb->get_col("SELECT user_id FROM $wpdb->pmpro_memberships_users WHERE code_id = '$clientCodeID' AND status = 'active'");
+													$codeUses = $code_url['uses'];
+												}
+											}
+
+											// $numberOfClients = count($member_ids);
+											if ($codeUses == 0){
+												//Membership Pause only available to Coaches with no Clients and no client licenses
+												$courseComplete = get_user_meta($current_user->ID, 'course_completed_3228');
+												if ($courseComplete && $current_user->membership_level->id == 1){
+													$courseComplete = 1;
+												} else {
+													$courseComplete = 0;
+												}
+												if ($courseComplete){
+													//Membership Pause only available to Coaches who have completed training
+													?>
+													<br><a href="<?php echo "pause" ?>" id="pauseAccount"><?php 
+													
+														if (!$membershipStatus){
+															_e("Pause Membership", 'buddyboss-theme' );
+														} else {
+															_e("Activate Membership", 'buddyboss-theme' );
+														}
+
+														?></a>
+													
+													<?php
+												}
+											}
+										} ?>
+									<br><a id="pmpro_actionlink-cancel" href="<?php echo pmpro_url("cancel", "?levelstocancel=" . $level->id)?>"><?php _e("Cancel Membership", 'buddyboss-theme' );?></a>
 									<?php do_action("pmpro_member_action_links_after"); ?>
 								</div> <!-- end pmpro_actionlinks -->
 							</td>
-							<td class="pmpro_account-membership-levelfee">
-								<p><?php echo pmpro_getLevelCost($level, true, true);?></p>
+							<td>
+							<?php
+								if (!$membershipStatus){
+									?>
+									<div id='membershipStatus' style="color:rgb(6, 189, 103);"><strong>Active</strong></div>
+									<?php
+								} else {
+									//Paused
+									?>
+									<div id='membershipStatus' style="color:rgb(237, 36, 9);"><strong>Paused</strong></div>
+									<?php
+								}
+								?>
 							</td>
+							<!-- <td class="pmpro_account-membership-levelfee">							
+								<p><?php //echo pmpro_getLevelCost($level, true, true);?></p>
+							</td> -->
 							<td class="pmpro_account-membership-expiration">
 							<?php 
 								if($level->enddate)
 									$expiration_text = date_i18n(get_option('date_format'), $level->enddate);
 								else
 									$expiration_text = "---";
-
-							    	echo apply_filters( 'pmpro_account_membership_expiration_text', $expiration_text, $level );
+									echo apply_filters( 'pmpro_account_membership_expiration_text', $expiration_text, $level );
 							?>
 							</td>
 						</tr>
@@ -96,9 +187,6 @@
 				<?php //Todo: If there are multiple levels defined that aren't all in the same group defined as upgrades/downgrades ?>
 				<div class="pmpro_actionlinks">
 					<a style="display:none;" id="pmpro_actionlink-levels" href="<?php echo pmpro_url("levels")?>"><?php _e("View all Membership Options", 'buddyboss-theme' );?></a>
-					<?php if ($level->name != "Client"){ ?>
-						<a id="changePayoutLocation" href="<?php echo 'payouts'; ?>"><?php _e("Change Referral Account", 'buddyboss-theme' );?></a>
-					<?php } ?>
 				</div>
 
 			</div> <!-- end pmpro_account-membership -->
@@ -358,7 +446,11 @@
 							success: function(value) {
 								var billingAmount = value;
 								var seatCost = billingAmount-coachLicenseCost;
-								var perSeatCost = seatCost/newLicenseCount;
+								if (seatCost == 0){
+									var perSeatCost = 0
+								} else {
+									var perSeatCost = seatCost/newLicenseCount;
+								}
 								jQuery('#originalLicenseCount').text(oldLicenseCount);
 								jQuery('#reduceLicenseCount,#reduceLicenseCount2').text(newLicenseCount);
 								jQuery('#reduceLicensePrice').text(perSeatCost);
@@ -657,11 +749,11 @@
 			<?php 
 				if ($current_user->membership_level->name == "Coach"){
 					?>
-					var emailCopy = "<br>Hi " + name +",<br><br>I’ve just become a PBC coach. Here’s my referral link you can use to do the same: <a href='" + referralLink + "'>Link</a><br><br>To find out how PBC can enhance your business coaching and generate an income stream, check out the <a href='https://poweredbychange.com'>Powered By Change</a> website as well as the <a href='https://youtu.be/moWYXA9FghE'>coaches revenue video</a> for more information on the benefits for you.<br><br>Feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
+					var emailCopy = "<br>Hi " + name +",<br><br>I’ve just become a PBC coach. Here’s my referral link you can use to do the same: <a href='" + referralLink + "'>Link</a><br><br>To find out how PBC can enhance your business coaching and generate an income stream, check out the <a href='https://poweredbychange.com/coaches-home/'>Powered By Change</a> website as well as the <a href='https://youtu.be/moWYXA9FghE'>coaches revenue video</a> for more information on the benefits for you.<br><br>Feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
 				<?php
 				} else {
 					?>
-					var emailCopy = "<br>Hi " + name +",<br><br>I’m inviting you to check-out PBC so you can use this platform to supercharge your clients results. <br><br>To find out how PBC can enhance your business coaching and generate an income stream, check out the <a href='https://poweredbychange.com'>Powered By Change</a> website as well as the <a href='https://youtu.be/moWYXA9FghE'>coaches revenue video</a> for more information on the benefits for you.<br><br>Here’s my referral link you can use to join PBC so we can collaborate and enhance your success: <a href='" + referralLink + "'>Link</a><br><br>I'll be in touch shortly. In the meantime, feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
+					var emailCopy = "<br>Hi " + name +",<br><br>I’m inviting you to check-out PBC so you can use this platform to supercharge your clients results. <br><br>To find out how PBC can enhance your business coaching and generate an income stream, check out the <a href='https://poweredbychange.com/coaches-home/'>Powered By Change</a> website as well as the <a href='https://youtu.be/moWYXA9FghE'>coaches revenue video</a> for more information on the benefits for you.<br><br>Here’s my referral link you can use to join PBC so we can collaborate and enhance your success: <a href='" + referralLink + "'>Link</a><br><br>I’ll be in touch shortly. In the meantime, feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
 				<?php
 				}
 			?>
