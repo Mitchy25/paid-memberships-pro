@@ -299,7 +299,7 @@
 
 	<script>
 		jQuery(document).ready(function(){
-			
+			console.log("TEST")
 			const queryString = window.location.search;
 			const urlParams = new URLSearchParams(queryString);
 			const focus = urlParams.get('focus');
@@ -521,7 +521,8 @@
 					$clevel = $current_user->membership_level;
 					$morder = new MemberOrder();
 					$morder->getLastMemberOrder($current_user->ID, array('success', '', 'cancelled'));
-					
+					$next_payment_date = "1901-01-01";
+
 					//Find Order
 					if(!empty($morder->timestamp)){
 
@@ -535,7 +536,7 @@
 						}
 					}
 				?>
-				var nextPaymentDate = <?php echo $next_payment_date ?>;
+				var nextPaymentDate = <?php echo $next_payment_date;?>;
 				var a = new Date(nextPaymentDate * 1000);
 				var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 				var nextChargeYear = a.getFullYear();
@@ -749,11 +750,11 @@
 			<?php 
 				if ($current_user->membership_level->name == "Coach"){
 					?>
-					var emailCopy = "<br>Hi " + name +",<br><br>I’ve just become a PBC coach. Here’s my referral link you can use to do the same: <a href='" + referralLink + "'>Link</a><br><br>To find out how PBC can enhance your business coaching and generate an income stream, check out the <a href='https://poweredbychange.com/coaches-home/'>Powered By Change</a> website as well as the <a href='https://youtu.be/moWYXA9FghE'>coaches revenue video</a> for more information on the benefits for you.<br><br>Feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
+					var emailCopy = "<br>Hi " + name +",<br><br>I’ve just become a PBC coach. <a href='" + referralLink + "'>Click here on my referral link</a> so you can do the same. <br><br>To find out how PBC can enhance your business coaching and generate an income stream, check out the <a href='https://poweredbychange.com/coaches-home/'>Powered By Change</a> website as well as the <a href='https://youtu.be/moWYXA9FghE'>coaches revenue video</a> for more information on the benefits for you.<br><br>Feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
 				<?php
 				} else {
 					?>
-					var emailCopy = "<br>Hi " + name +",<br><br>I’m inviting you to check-out PBC so you can use this platform to supercharge your clients results. <br><br>To find out how PBC can enhance your business coaching and generate an income stream, check out the <a href='https://poweredbychange.com/coaches-home/'>Powered By Change</a> website as well as the <a href='https://youtu.be/moWYXA9FghE'>coaches revenue video</a> for more information on the benefits for you.<br><br>Here’s my referral link you can use to join PBC so we can collaborate and enhance your success: <a href='" + referralLink + "'>Link</a><br><br>I’ll be in touch shortly. In the meantime, feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
+					var emailCopy = "<br>Hi " + name +",<br><br>I’m inviting you to check-out PBC so you can use this platform to supercharge your clients results. <br><br>To find out how PBC can enhance your business coaching and generate an income stream, check out the <a href='https://poweredbychange.com/coaches-home/'>Powered By Change</a> website as well as the <a href='https://youtu.be/moWYXA9FghE'>coaches revenue video</a> for more information on the benefits for you.<br><br><a href='" + referralLink + "'>Here’s my referral link you can use</a> to join PBC so we can collaborate and enhance your success. <br><br>I’ll be in touch shortly. In the meantime, feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
 				<?php
 				}
 			?>
@@ -857,7 +858,7 @@
 			referralLink.replace('"','');
 			var coachName = "<?php echo $current_user->user_firstname . " " . $current_user->user_lastname?>"
 			var coachEmail = "<?php echo $current_user->user_email;?>"
-			var emailCopy = "<br>Hi " + name +",<br><br>I’m inviting you to join me in using the Powered By Change (PBC) platform to supercharge your results. <br><br>Here’s my referral link. You can use this to join PBC so we can collaborate and enhance your success: <a href='" + referralLink + "&bemail=" + jQuery('#email_clients').val() + "'>Link</a><br><br>To find out more about PBC and how it can help improve your business success, you can register for the complimentary <a href='https://poweredbychange.com/clients-home/'>webinar through the website</a>.<br><br>Feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
+			var emailCopy = "<br>Hi " + name +",<br><br>I’m inviting you to join me in using the Powered By Change (PBC) platform to supercharge your results. <br><br><a href='" + referralLink + "&bemail=" + jQuery('#email_clients').val() + "'>Here’s my referral link that you can use</a> to join PBC so we can collaborate and enhance your success.<br><br>To find out more about PBC and how it can help improve your business success, you can register for the complimentary <a href='https://poweredbychange.com/clients-home/'>webinar through the website</a>.<br><br>Feel free to get in touch with me if you have any questions (" + coachEmail + ").<br><br>Regards,<br>" + coachName;
 
 			$('#messageContents_clients').html(emailCopy);
 		}

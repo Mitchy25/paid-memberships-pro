@@ -1,6 +1,6 @@
 <?php
 	global $gateway, $pmpro_review, $skip_account_fields, $pmpro_paypal_token, $wpdb, $current_user, $pmpro_msg, $pmpro_msgt, $pmpro_requirebilling, $pmpro_level, $pmpro_levels, $tospage, $pmpro_show_discount_code, $pmpro_error_fields;
-	global $affiliate_code, $discount_code, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth,$ExpirationYear;
+	global $affiliate_code, $affiliate_id, $discount_code, $username, $password, $password2, $bfirstname, $blastname, $baddress1, $baddress2, $bcity, $bstate, $bzipcode, $bcountry, $bphone, $bemail, $bconfirmemail, $CardType, $AccountNumber, $ExpirationMonth,$ExpirationYear;
 
 	/**
 	 * Filter to set if PMPro uses email or text as the type for email field inputs.
@@ -92,10 +92,12 @@
 						}
 						
 						if ($affiliate_code){
+							$affiliate_id = $affiliate_code;
 							if (pmpro_checkDiscountCode($affiliate_code, null, false, true, "affiliate")) {
 								printf(__('<p class="' . pmpro_get_element_class( 'pmpro_level_discount_applied' ) . '">The <strong>%s</strong> affliate code has been applied to your order.</p>', 'paid-memberships-pro' ), $affiliate_code);
 							} else {
 								$affiliate_code = "";
+								$affiliate_id = "";
 							}
 						}
 						
@@ -131,7 +133,7 @@
 						<?php } elseif(!$pmpro_review) { ?>
 							<p id="other_affiliate_code_p" class="<?php echo pmpro_get_element_class( 'pmpro_small', 'other_affiliate_code_p' ); ?>"><?php _e('Coach Referral Code:', 'paid-memberships-pro' );?><br><a id="other_affiliate_code_a" href="#affiliate_code"><?php _e('Click here to enter a Coach Referral Code', 'paid-memberships-pro' );?></a>.</p>
 						<?php } elseif($pmpro_review && $affiliate_code) { ?>
-							<p><strong><?php _e('Affilate Code', 'paid-memberships-pro' );?>:</strong> <?php echo $affiliate_code?></p>
+							<p><strong><?php _e('Affiliate Code', 'paid-memberships-pro' );?>:</strong> <?php echo $affiliate_code?></p>
 						<?php } ?>
 
 					<div id="other_affiliate_code_tr" style="display: none;">
@@ -405,7 +407,9 @@
 
 	<?php
 		$pmpro_include_payment_information_fields = apply_filters("pmpro_include_payment_information_fields", true);
+
 		if($pmpro_include_payment_information_fields) { ?>
+		
 		<div id="pmpro_payment_information_fields" class="<?php echo pmpro_get_element_class( 'pmpro_checkout', 'pmpro_payment_information_fields' ); ?>" <?php if(!$pmpro_requirebilling || apply_filters("pmpro_hide_payment_information_fields", false) ) { ?>style="display: none;"<?php } ?>>
 			<hr />
 			<h3>
@@ -486,6 +490,13 @@
 			<?php } ?>
 		</div> <!-- end pmpro_payment_information_fields -->
 	<?php } ?>
+
+	<div style="display:none;" class="<?php echo pmpro_get_element_class( 'pmpro_checkout-field pmpro_payment-affiliate-code', 'pmpro_payment-affiliate-code' ); ?>">
+		<label for="affiliate_code"><?php _e('Affiliate Code', 'paid-memberships-pro' );?></label>
+		<input class="<?php echo pmpro_get_element_class( 'input pmpro_alter_price', 'affiliate_code' ); ?>" id="affiliate_code" name="affiliate_code" type="text" size="10" value="<?php echo esc_attr($affiliate_code); ?>" />
+		<input type="button" id="affiliate_code_button" name="affiliate_code_button" value="<?php _e('Apply', 'paid-memberships-pro' );?>" />
+		<p id="affiliate_code_message" class="<?php echo pmpro_get_element_class( 'pmpro_message', 'affiliate_code_message' ); ?>" style="display: none;"></p>
+	</div>
 
 	<?php do_action('pmpro_checkout_after_payment_information_fields'); ?>
 

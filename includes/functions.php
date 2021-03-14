@@ -384,7 +384,8 @@ function pmpro_getLevelCost( &$level, $tags = true, $short = false ) {
 			if ($level->name == "Client"){
 				$r = sprintf( __( 'Your client membership is managed by your coach. You will not be charged by PBC for your subscription', 'paid-memberships-pro' ));
 			} elseif ($level->name == "Coach") {
-				$r = sprintf( __( 'The price for your Coaches Membership is <strong>%s</strong> for this payment', 'paid-memberships-pro' ),pmpro_formatPrice( $level->initial_payment ) );
+				//$r = sprintf( __( 'The price for your Coaches Membership is <strong>%s</strong> for this payment', 'paid-memberships-pro' ),pmpro_formatPrice( $level->initial_payment ) );
+				$r = sprintf( __( 'The price for your Coaches Membership is <strong>%1$s per %2$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->initial_payment ), pmpro_translate_billing_period( $level->cycle_period ) );
 			} elseif ($level->name == "Influencer") {
 				$r = sprintf( __( 'The price for your Influencers Membership is <strong>%s</strong> for this payment', 'paid-memberships-pro' ),pmpro_formatPrice( $level->initial_payment ) );
 			} elseif ($level->name == "BDM") {
@@ -432,7 +433,8 @@ function pmpro_getLevelCost( &$level, $tags = true, $short = false ) {
 				} else {
 					if (!$level->trial_limit){
 						if ( $level->cycle_number == '1') {
-							$r .= sprintf( __( ' and then <strong>%1$s per %2$s</strong> from your next payment.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ) );
+							//Ignore
+							//$r .= sprintf( __( ' and then <strong>%1$s per %2$s</strong> from your next payment.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), pmpro_translate_billing_period( $level->cycle_period ) );
 						} else {
 							$r .= sprintf( __( ' and then <strong>%1$s every %2$d %3$s</strong>.', 'paid-memberships-pro' ), pmpro_formatPrice( $level->billing_amount ), $level->cycle_number, pmpro_translate_billing_period( $level->cycle_period, $level->cycle_number ) );
 						}
@@ -1722,7 +1724,7 @@ function pmpro_checkDiscountCode( $code, $level_id = null, $return_errors = fals
 
 	// have we run out of uses?
 	if ( ! $error ) {
-		if ( $dbcode->uses > 0 ) {
+		if ( $dbcode->uses > 0 || (substr($dbcode->code,0,10) == "PBC-Client" && $dbcode->uses >= 0)) {
 			$used = $wpdb->get_var( "SELECT COUNT(*) FROM $wpdb->pmpro_discount_codes_uses WHERE code_id = '" . $dbcode->id . "'" );
 			if ( $used >= $dbcode->uses ) {
 				$error = __( 'This discount code is no longer valid.', 'paid-memberships-pro' );
@@ -2330,7 +2332,7 @@ function pmpro_getLevelAtCheckout( $level_id = null, $discount_code = null ) {
 	}
 
 	// filter the level (for upgrades, etc)
-	//$pmpro_level = apply_filters( 'pmpro_checkout_level', $pmpro_level );
+	$pmpro_level = apply_filters( 'pmpro_checkout_level', $pmpro_level );
 
 	return $pmpro_level;
 }
@@ -3313,6 +3315,7 @@ function pmpro_show_discount_code() {
 	$morder->membership_name  = $pmpro_level->name;
 	$morder->discount_code    = $discount_code;
 	$morder->InitialPayment   = pmpro_round_price( $pmpro_level->initial_payment );
+
 	$morder->PaymentAmount    = pmpro_round_price( $pmpro_level->billing_amount );
 	$morder->ProfileStartDate = date_i18n( "Y-m-d", current_time( "timestamp" ) ) . "T0:0:0";
 	$morder->BillingPeriod    = $pmpro_level->cycle_period;

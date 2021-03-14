@@ -7,10 +7,16 @@ add_filter( 'pmpro_is_checkout', '__return_true' );
 add_action( 'template_redirect', 'redirectIfNotRequired');
 
 function redirectIfNotRequired(){
-	global $current_user, $pmpro_checkout_level_ids;
+	global $current_user, $pmpro_checkout_level_ids, $wpdb, $pmpro_level;
 	//redirect to membership
+
 	$rurl = pmpro_url( "account");
 	$membershipStatus = get_user_meta($current_user->ID,'pauseStatus');
+
+	if (!$pmpro_level){
+		wp_redirect("/");
+		exit(0);
+	}
 
 	//Check if alreadys signed up and not getting more seats
 	if ($current_user->ID && !isset($_REQUEST['seats'])){ 
@@ -34,9 +40,13 @@ function redirectIfNotRequired(){
 		exit(0);
 	}
 
-	if ($current_user->ID && (isset($_REQUEST['discount_code']) || isset($_REQUEST['affiliate_code']))){
-		wp_redirect( $rurl );
-		exit(0);
+	if ($current_user->ID && ((isset($_REQUEST['discount_code']) && ($_REQUEST['discount_code']))||(isset($_REQUEST['affiliate_code']) && ($_REQUEST['affiliate_code'])))){
+		if (isset($current_user->membership_level)){
+			if ($current_user->membership_level->id == 1 || $current_user->membership_level->id == 2){
+				wp_redirect( $rurl );
+				exit(0);
+			}
+		}
 	}
 
 	//Check if Discount Code is all used

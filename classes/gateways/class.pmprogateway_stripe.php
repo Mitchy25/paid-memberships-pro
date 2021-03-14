@@ -1609,7 +1609,6 @@ class PMProGateway_stripe extends PMProGateway {
 
 		$this->clean_up( $order );
 		$order->status = 'success';
-		error_log("ProcessStripe");
 		$order->saveOrder();
 
 		return true;
@@ -2331,7 +2330,6 @@ class PMProGateway_stripe extends PMProGateway {
 		//save order so we know which plan to look for at stripe (order code = plan id)
 		$update_order->Gateway->clean_up( $update_order );
 		$update_order->status = "success";
-		error_log("Stripe Update");
 		$update_order->saveOrder();
 	}
 
@@ -2879,10 +2877,11 @@ class PMProGateway_stripe extends PMProGateway {
 
 	function create_plan( &$order ) {
 
-		global $pmpro_currencies, $pmpro_currency;
-		
+		global $pmpro_currencies, $pmpro_currency, $current_user;
+
 		//figure out the amounts
 		$amount     = $order->PaymentAmount;
+		error_log("StripeAmount: " . $amount);
 		$amount_tax = $order->getTaxForPrice( $amount );
 		$amount     = pmpro_round_price( (float) $amount + (float) $amount_tax );
 
@@ -2918,7 +2917,6 @@ class PMProGateway_stripe extends PMProGateway {
 		
 		//when would the next payment be	
 		if (isset($order->TrialBillingCycles)){
-			error_log($order->TrialBillingCycles);
 			$offsetAmount = $order->TrialBillingCycles + 1; //Account for first month delay too (+1) 
 		} else {
 			$offsetAmount = $order->BillingFrequency;
@@ -2933,11 +2931,15 @@ class PMProGateway_stripe extends PMProGateway {
 		//convert to a profile start date
 		$order->ProfileStartDate = date_i18n( "Y-m-d", strtotime( "+ " . $trial_period_days . " Day", current_time( "timestamp" ) ) ) . "T0:0:0";
 
-		//filter the start date
-		$order->ProfileStartDate = apply_filters( "pmpro_profile_start_date", $order->ProfileStartDate, $order );
+		if ($current_user->membership_level->id == 7 || $current_user->membership_level->id == 8){
+			//Skip for BDM/Influencer Upgrading
+		} else {
+			//filter the start date
+			$order->ProfileStartDate = apply_filters( "pmpro_profile_start_date", $order->ProfileStartDate, $order );
 
-		//convert back to days
-		$trial_period_days = ceil( abs( strtotime( date_i18n( "Y-m-d" ), current_time( "timestamp" ) ) - strtotime( $order->ProfileStartDate, current_time( "timestamp" ) ) ) / 86400 );
+			//convert back to days
+			$trial_period_days = ceil( abs( strtotime( date_i18n( "Y-m-d" ), current_time( "timestamp" ) ) - strtotime( $order->ProfileStartDate, current_time( "timestamp" ) ) ) / 86400 );
+		}
 
 		//for free trials, just push the start date of the subscription back
 		// if ( ! empty( $order->TrialBillingCycles ) && $order->TrialAmount == 0 ) {
@@ -2955,16 +2957,14 @@ class PMProGateway_stripe extends PMProGateway {
 
 		// }
 
-		global $current_user;
 
 		//get current plan at Stripe to get payment date
 		$last_order = new MemberOrder();
-		$last_order->getLastMemberOrder($current_user->ID, array('success', '','cancelled'),$order->membership_id);
+		$last_order->getLastMemberOrder($current_user->ID, array('success', '','cancelled'));
 		$last_order->setGateway( 'stripe' );
 		$last_order->Gateway->getCustomer( $last_order );
 
 		$subscription = $last_order->Gateway->getSubscription( $last_order );
-
 		if (!empty($subscription)) {
 			$end_timestamp = $subscription->current_period_end;
 			$orderStartDate = date_i18n( "Y-m-d", $end_timestamp). "T0:0:0";

@@ -174,6 +174,23 @@
 			$this->template = apply_filters("pmpro_email_template", "certificate", $this);
 			return $this->sendEmail();
 		}
+
+		function sendKeyEmail($user = NULL, $code = NULL){
+			global $wpdb, $current_user;
+			if(!$user)
+				$user = $current_user;
+			
+			if(!$user)
+				return false;
+			
+			$this->email = $user->user_email;
+			$this->subject = sprintf(__('Your PBC Training Certificate', 'paid-memberships-pro'), get_option("blogname"));
+
+			$this->data = array("user_email" => $user->user_email, "display_name" => $user->display_name, "membership_level_name"=>"Coach", "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"), "code"=>$code);
+
+			$this->template = apply_filters("pmpro_email_template", "digital_key", $this);
+			return $this->sendEmail();
+		}
 		
 		function sendCancelEmail($user = NULL, $old_level_id = NULL){
 			global $wpdb, $current_user;

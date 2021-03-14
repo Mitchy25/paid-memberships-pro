@@ -304,6 +304,12 @@
 			if(!$user_id)
 				return false;
 
+			if (isset($current_user->membership_level)){
+				if ($current_user->membership_level->id == 7 || $current_user->membership_level->id == 8){
+					return false;
+				}
+			}
+
 			//build query (Get first COACH order)
 			$this->sqlQuery = "SELECT id FROM $wpdb->pmpro_membership_orders WHERE user_id = '" . $user_id . "' AND notes = '' AND membership_id = 1 ORDER BY timestamp ASC LIMIT 1";
 

@@ -95,9 +95,5 @@ If you choose to change your membership level to a Coach, you are agreeing to th
 </div>
 <br>
 <p class="<?php echo pmpro_get_element_class( 'pmpro_actions_nav' ); ?>">
-	<?php if( $has_any_level ) { ?>
-		<a href="<?php echo pmpro_url("account")?>" id="pmpro_levels-return-account"><?php _e('&larr; Return to Your Account', 'paid-memberships-pro' );?></a>
-	<?php } else { ?>
-		<a href="<?php echo home_url()?>" id="pmpro_levels-return-home"><?php _e('&larr; Return to Home', 'paid-memberships-pro' );?></a>
-	<?php } ?>
+	<a href="<?php echo pmpro_url("account")?>" id="pmpro_levels-return-account"><?php _e('&larr; Return to Your Account', 'paid-memberships-pro' );?></a>
 </p> <!-- end pmpro_actions_nav -->
