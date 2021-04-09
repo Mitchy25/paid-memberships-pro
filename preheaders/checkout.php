@@ -24,6 +24,16 @@ function redirectIfNotRequired(){
 			if ($current_user->membership_level->name == "Coach" || $current_user->membership_level->name == "Client") {
 				wp_redirect( $rurl );
 				exit(0);
+			} elseif ($current_user->membership_level->name == "Coach (Training)"){
+				if (!isset($_REQUEST['level']) || $_REQUEST['level'] != 1){
+					wp_redirect( $rurl );
+					exit(0);
+				}
+			} elseif ($current_user->membership_level->name == "BDM" || $current_user->membership_level->name == "Influencer"){
+				if (!isset($_REQUEST['level']) || $_REQUEST['level'] != 1){
+					wp_redirect( $rurl );
+					exit(0);
+				}	
 			}
 		}
 	}
@@ -35,7 +45,7 @@ function redirectIfNotRequired(){
 		}
 	}
 
-	if ($membershipStatus){
+	if ($membershipStatus && $current_user->membership_level->name != "Coach (Training)"){
 		wp_redirect( $rurl );
 		exit(0);
 	}
@@ -138,8 +148,8 @@ if (isset($current_user->membership_level->name) && ($current_user->membership_l
 		}
 	</style>
 	<?php
-	} elseif (isset($current_user->membership_level->name) && (($current_user->membership_level->name == "Influencer" || $current_user->membership_level->name == "BDM") && $_REQUEST['level'] == 1)){
-		//Upgrade from Influencer/BDM to Coach
+	} elseif (isset($current_user->membership_level->name) && (($current_user->membership_level->name == "Influencer" || $current_user->membership_level->name == "BDM" || $current_user->membership_level->name == "Coach (Training)") && $_REQUEST['level'] == 1)){
+		//Upgrade from Influencer/BDM/Training to Coach
 		?>
 		<style>
 			#checkout-title-2 {
@@ -151,8 +161,8 @@ if (isset($current_user->membership_level->name) && ($current_user->membership_l
 
 		</style>
 		<?php
-	} elseif ($_REQUEST['level'] == 1){
-		//Hide Seat Purchase and Client Signup (This is Coach Signup)
+	} elseif ($_REQUEST['level'] == 1 || $_REQUEST['level'] == 9){
+		//Hide Seat Purchase and Client Signup (This is Coach or Coaching (Training) Signup)
 		?>
 		<style>
 			#checkout-title-2 {
@@ -163,7 +173,7 @@ if (isset($current_user->membership_level->name) && ($current_user->membership_l
 			}
 		</style>
 		<?php
-	}
+	} 
 } else {
 	//Hide Seat Purchase and Client Signup (This is Coach Signup)
 	?>
@@ -669,6 +679,10 @@ if ( $submit && $pmpro_msgt != "pmpro_error" ) {
 	}    //endif ($pmpro_continue_registration)
 }
 
+if ($pmpro_level->id == 9){
+	$morder = pmpro_build_order_for_checkout();
+}
+
 //make sure we have at least an empty morder here to avoid a warning
 if ( empty( $morder ) ) {
 	$morder = false;
@@ -859,6 +873,9 @@ if ( ! empty( $pmpro_confirmed ) ) {
 				$morder = apply_filters( "pmpro_checkout_order_free", $morder );
 			}
 
+
+			error_log(json_encode($morder));
+
 			//add an item to the history table, cancel old subscriptions
 			if ( ! empty( $morder ) ) {
 				$morder->user_id       = $user_id;
@@ -876,6 +893,8 @@ if ( ! empty( $pmpro_confirmed ) ) {
 				if (isset($morder->affiliate_id)){
 					add_user_meta($user_id,"affiliateCode",$morder->affiliate_id);
 
+					
+
 					//Lookup Owner of Affiliate Code and check their Memmbership ID (Want to add Expiry for BDM and Influencers)
 					$code = $morder->affiliate_id;
 					//Lookup Code to get ID
@@ -884,9 +903,14 @@ if ( ! empty( $pmpro_confirmed ) ) {
 					$parentUser = $code_user_ids[$code_id];
 					$userMeta = get_userdata( $parentUser);
 					$user_roles = $userMeta->roles;
+
+					$infiniteCodeUsers = [1386];
+
     				if ( in_array( 'influencer', $user_roles, true ) ||  in_array( 'bdm', $user_roles, true ) ) {
-						$futureDate=date('Y-m-d', strtotime('+1 year'));
-						add_user_meta($user_id,'affiliateCodeExpiry',$futureDate);
+						if (!in_array($user_id,$infiniteCodeUsers,true)){
+							$futureDate=date('Y-m-d', strtotime('+1 year'));
+							add_user_meta($user_id,'affiliateCodeExpiry',$futureDate);
+						}
 					}
 
 					//add affiliate code use (If first time only)
@@ -991,7 +1015,7 @@ if ( ! empty( $pmpro_confirmed ) ) {
 				}
 				$current_user->membership_level = $pmpro_level; //make sure they have the right level info
 
-				if ($current_user->membership_level->name == "Coach" || $current_user->membership_level->name == "Client" || $current_user->membership_level->name == "BDM"){
+				if ($current_user->membership_level->name == "Coach" || $current_user->membership_level->name == "Client" || $current_user->membership_level->name == "BDM" || $current_user->membership_level->name == "Coach (Training)"){
 					//send email to member
 					$pmproemail = new PMProEmail();
 					$pmproemail->sendCheckoutEmail( $current_user, $invoice );

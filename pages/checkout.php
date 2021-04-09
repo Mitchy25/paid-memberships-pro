@@ -57,7 +57,7 @@
 					$clevel = $current_user->membership_level;
 					if (!$clevel){
 						printf(__('You are signing up as a <strong>%s</strong>', 'paid-memberships-pro' ), $pmpro_level->name);
-					} else if ($clevel && ($clevel->name == "BDM" || $clevel->name == "Influencer")){
+					} else if ($clevel && ($clevel->name == "BDM" || $clevel->name == "Influencer" || $clevel->name == "Coach (Training)")){
 						printf(__('You are upgrading to a <strong>%s</strong>', 'paid-memberships-pro' ), $pmpro_level->name);
 					} else if ($clevel->ID == 2) {
 						wp_redirect(home_url( '/membership-account'));
@@ -94,7 +94,7 @@
 						if ($affiliate_code){
 							$affiliate_id = $affiliate_code;
 							if (pmpro_checkDiscountCode($affiliate_code, null, false, true, "affiliate")) {
-								printf(__('<p class="' . pmpro_get_element_class( 'pmpro_level_discount_applied' ) . '">The <strong>%s</strong> affliate code has been applied to your order.</p>', 'paid-memberships-pro' ), $affiliate_code);
+								printf(__('<p class="' . pmpro_get_element_class( 'pmpro_level_discount_applied' ) . '">The <strong>%s</strong> referral code has been applied to your order.</p>', 'paid-memberships-pro' ), $affiliate_code);
 							} else {
 								$affiliate_code = "";
 								$affiliate_id = "";
@@ -102,13 +102,25 @@
 						}
 						
 						echo wpautop(pmpro_getLevelCost($pmpro_level)); 
-					    echo wpautop(pmpro_getLevelExpiration($pmpro_level)); ?>
+						// echo wpautop(pmpro_getLevelExpiration($pmpro_level)); 
+						
+						if ($pmpro_level->id == 1 || $pmpro_level->id == 9){
+							if ($current_user){
+								$digitalKey = get_user_meta($current_user->ID,"pbcDigitalCopy");
+							}
+							if (!$current_user || !$digitalKey){
+								echo sprintf( __( 'You will receive a welcome email and a separate email with your digital code for your free digital book copy of Powered By Change.<br>Please ensure you check your spam folder.', 'paid-memberships-pro' ));
+							}
+						}
+						?>
+
+						
 
 				</div>
 
 				<?php do_action("pmpro_checkout_after_level_cost");?>
 				
-				<?php if (($pmpro_level->id == 1 && !$clevel) || ($clevel && ($current_user->membership_level->name == "BDM" || $current_user->membership_level->name == "Influencer"))) { ?>
+				<?php if (($pmpro_level->id == 1 && !$clevel) || ($clevel && ($current_user->membership_level->name == "BDM" || $current_user->membership_level->name == "Influencer" || $current_user->membership_level->name == "Coach (Training)"))) { ?>
 					<?php if($pmpro_show_discount_code) { ?>
 						<?php if($discount_code && !$pmpro_review) { ?>
 							<p id="other_discount_code_p" class="<?php echo pmpro_get_element_class( 'pmpro_small', 'other_discount_code_p' ); ?>"><?php _e('Discount Code: ' . $discount_code, 'paid-memberships-pro' );?><br><a id="other_discount_code_a" href="#discount_code"><?php _e('Click here to change your discount code.', 'paid-memberships-pro' );?></a></p>
@@ -127,7 +139,7 @@
 					<?php } ?>
 				<?php } ?>
 						
-				<?php if ($pmpro_level->id == 1 && !$clevel || ($clevel && ($current_user->membership_level->name == "BDM" || $current_user->membership_level->name == "Influencer"))) { ?>
+				<?php if (($pmpro_level->id == 1 || $pmpro_level->id == 9) && !$clevel || ($clevel && ($current_user->membership_level->name == "BDM" || $current_user->membership_level->name == "Influencer" || $current_user->membership_level->name == "Coach (Training)"))) { ?>
 						<?php if($affiliate_code && !$pmpro_review) { ?>
 							<p id="other_affiliate_code_p" class="<?php echo pmpro_get_element_class( 'pmpro_small', 'other_affiliate_code_p' ); ?>"><?php _e('Coach Referral Code: ' . $affiliate_code, 'paid-memberships-pro' );?><br></p>
 						<?php } elseif(!$pmpro_review) { ?>

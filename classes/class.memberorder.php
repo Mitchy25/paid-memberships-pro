@@ -305,7 +305,7 @@
 				return false;
 
 			if (isset($current_user->membership_level)){
-				if ($current_user->membership_level->id == 7 || $current_user->membership_level->id == 8){
+				if ($current_user->membership_level->id == 7 || $current_user->membership_level->id == 8 || $current_user->membership_level->id == 9){
 					return false;
 				}
 			}
@@ -322,8 +322,7 @@
 		/*
 			Returns the order using the given order code.
 		*/
-		function getMemberOrderByCode($code)
-		{
+		function getMemberOrderByCode($code){
 			global $wpdb;
 			$id = $wpdb->get_var("SELECT id FROM $wpdb->pmpro_membership_orders WHERE code = '" . $code . "' LIMIT 1");
 			if($id)

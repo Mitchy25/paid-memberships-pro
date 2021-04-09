@@ -20,9 +20,38 @@ function pmpro_cron_expire_memberships()
 
 	$expired = $wpdb->get_results($sqlQuery);
 
-	foreach($expired as $e)
-	{
+	foreach($expired as $e)	{
+		$cancel = 1;
+		$coachTraining = 0;
+
+		// $pauseStatus = get_user_meta($e->user_id,'pauseStatus');
+		if ($e->membership_id  == 9){
+			$coachTraining = 1;
+			$user = get_user_by('id',$e->user_id);
+			$courseComplete = get_user_meta($e->user_id, 'course_completed_3228');
+			$email = new PMProEmail();
+			if ($courseComplete){
+				
+				$cancel = 0;
+				$endDate = date('Y-m-d', strtotime('+ 6 months'));
+				update_user_meta($e->user_id,'pauseStatus',$endDate);
+
+				//Update The Order
+				$sqlQuery = "UPDATE $wpdb->pmpro_memberships_users SET enddate = '" . $endDate . "' WHERE user_id = '" . $e->user_id . "' AND status = 'active' LIMIT 1";
+				$wpdb->query($sqlQuery);
+
+				$email->sendMembershipPausedTrainingEndEmailGraduated($user); 
+			} else {
+				$cancel = 1;
+				$email->sendMembershipCancelledTrainingEndEmailNotGraduated($user); 
+			}
+		}
+		
 		do_action("pmpro_membership_pre_membership_expiry", $e->user_id, $e->membership_id );
+		
+		if ($cancel == 0){
+			continue;
+		}
 
 		//remove their membership
 		pmpro_changeMembershipLevel(false, $e->user_id, 'expired', $e->membership_id);
@@ -30,12 +59,11 @@ function pmpro_cron_expire_memberships()
 		do_action("pmpro_membership_post_membership_expiry", $e->user_id, $e->membership_id );
 
 		$send_email = apply_filters("pmpro_send_expiration_email", true, $e->user_id);
-		if($send_email)
-		{
+		if($send_email)	{
 			//send an email
 			$pmproemail = new PMProEmail();
 			$euser = get_userdata($e->user_id);
-			if ( ! empty( $euser ) ) {
+			if ( ! empty( $euser ) && $coachTraining == 0) {
 				$pmproemail->sendMembershipExpiredEmail($euser);
 
 				if(current_user_can('manage_options')) {
@@ -52,8 +80,7 @@ function pmpro_cron_expire_memberships()
 	Expiration Warning Emails
 */
 add_action("pmpro_cron_expiration_warnings", "pmpro_cron_expiration_warnings");
-function pmpro_cron_expiration_warnings()
-{
+function pmpro_cron_expiration_warnings(){
 	global $wpdb;
 
 	//clean up errors in the memberships_users table that could cause problems
@@ -93,6 +120,8 @@ function pmpro_cron_expiration_warnings()
 		$interval_end
 	);
 
+	error_log($sqlQuery);
+
 	if(defined('PMPRO_CRON_LIMIT'))
 		$sqlQuery .= " LIMIT " . PMPRO_CRON_LIMIT;
 
@@ -101,13 +130,20 @@ function pmpro_cron_expiration_warnings()
 	foreach($expiring_soon as $e)
 	{
 		$send_email = apply_filters("pmpro_send_expiration_warning_email", true, $e->user_id);
-		if($send_email)
-		{
+		if($send_email)		{
 			//send an email
 			$pmproemail = new PMProEmail();
 			$euser = get_userdata($e->user_id);
 			if ( ! empty( $euser ) ) {
-				$pmproemail->sendMembershipExpiringEmail($euser);
+
+				if ($e->membership_id == 9){
+					$courseComplete = get_user_meta($e->user_id, 'course_completed_3228');
+					if (!$courseComplete){
+						$pmproemail->sendMembershipExpiringEmailCoachTrainingTrainingIncomplete($euser);
+					}
+				} else {
+					$pmproemail->sendMembershipExpiringEmail($euser);
+				}
 
 				if(current_user_can('manage_options')) {
 					printf(__("Membership expiring email sent to %s. ", 'paid-memberships-pro' ), $euser->user_email);
@@ -122,6 +158,87 @@ function pmpro_cron_expiration_warnings()
 
 		//update user meta so we don't email them again
 		update_user_meta($e->user_id, "pmpro_expiration_notice", $today);
+	}
+}
+
+add_action("pmpro_cron_expiration_warnings", "pmpro_cron_expiration_warnings_day_before");
+function pmpro_cron_expiration_warnings_day_before(){
+	global $wpdb;
+
+	//clean up errors in the memberships_users table that could cause problems
+	pmpro_cleanup_memberships_users_table();
+
+	$today = date("Y-m-d 00:00:00", current_time("timestamp"));
+
+	$pmpro_email_days_before_expiration = apply_filters("pmpro_email_days_before_expiration", 2);
+
+	// Configure the interval to select records from
+	$interval_start = $today;
+	$interval_end = date( 'Y-m-d 00:00:00', strtotime( "{$today} +{$pmpro_email_days_before_expiration} days", current_time( 'timestamp' ) ) );
+
+	//look for memberships that are going to expire within one week (but we haven't emailed them within a week)
+	$sqlQuery = $wpdb->prepare(
+		"SELECT DISTINCT
+  				mu.user_id,
+  				mu.membership_id,
+  				mu.startdate,
+ 				mu.enddate,
+ 				um.meta_value AS notice
+ 			FROM {$wpdb->pmpro_memberships_users} AS mu
+ 			  LEFT JOIN {$wpdb->usermeta} AS um ON um.user_id = mu.user_id
+            	AND um.meta_key = %s
+			WHERE ( um.meta_value IS NULL OR DATE_ADD(um.meta_value, INTERVAL %d DAY) < %s )
+				AND ( mu.status = 'active' )
+ 			    AND ( mu.enddate IS NOT NULL )
+ 			    AND ( mu.enddate <> '0000-00-00 00:00:00' )
+ 			    AND ( mu.enddate BETWEEN %s AND %s )
+ 			    AND ( mu.membership_id <> 0 OR mu.membership_id <> NULL )
+			ORDER BY mu.enddate
+			",
+		"pmpro_expiration_notice_final",
+		$pmpro_email_days_before_expiration,
+		$today,
+		$interval_start,
+		$interval_end
+	);
+
+	error_log($sqlQuery);
+
+	if(defined('PMPRO_CRON_LIMIT'))
+		$sqlQuery .= " LIMIT " . PMPRO_CRON_LIMIT;
+
+	$expiring_soon = $wpdb->get_results($sqlQuery);
+
+	foreach($expiring_soon as $e)
+	{
+		$send_email = apply_filters("pmpro_send_expiration_warning_email", true, $e->user_id);
+		if($send_email)
+		{
+			//send an email
+			$pmproemail = new PMProEmail();
+			$euser = get_userdata($e->user_id);
+			if ( ! empty( $euser ) ) {
+
+				if ($e->membership_id == 9){
+					$courseComplete = get_user_meta($e->user_id, 'course_completed_3228');
+					if (!$courseComplete){
+						$pmproemail->sendMembershipExpiringEmailCoachTrainingTrainingIncompleteDayBefore($euser);
+					}
+				}
+
+				if(current_user_can('manage_options')) {
+					printf(__("Membership expiring email sent to %s. ", 'paid-memberships-pro' ), $euser->user_email);
+				} else {
+					echo ". ";
+				}
+			}
+		}
+
+		//delete all user meta for this key to prevent duplicate user meta rows
+		delete_user_meta($e->user_id, "pmpro_expiration_notice_final");
+
+		//update user meta so we don't email them again
+		update_user_meta($e->user_id, "pmpro_expiration_notice_final", $today);
 	}
 }
 

@@ -379,7 +379,7 @@ function pmpro_getLevelCost( &$level, $tags = true, $short = false ) {
 	global $current_user;
 	$clevel = $current_user->membership_level;
 
-	if (!$clevel || ($clevel->name == "BDM" || $clevel->name == "Influencer")){
+	if (!$clevel || ($clevel->name == "BDM" || $clevel->name == "Influencer" || $clevel->name == "Coach (Training)")){
 		if ( ! $short ) {
 			if ($level->name == "Client"){
 				$r = sprintf( __( 'Your client membership is managed by your coach. You will not be charged by PBC for your subscription', 'paid-memberships-pro' ));
@@ -390,6 +390,8 @@ function pmpro_getLevelCost( &$level, $tags = true, $short = false ) {
 				$r = sprintf( __( 'The price for your Influencers Membership is <strong>%s</strong> for this payment', 'paid-memberships-pro' ),pmpro_formatPrice( $level->initial_payment ) );
 			} elseif ($level->name == "BDM") {
 				$r = sprintf( __( 'The price for your BDM Membership is <strong>%s</strong> for this payment', 'paid-memberships-pro' ),pmpro_formatPrice( $level->initial_payment ) );
+			} elseif ($level->name == "Coach (Training)") {
+				$r = sprintf( __( 'The price for your Coach (Training) Membership is <strong>%s</strong> for this payment', 'paid-memberships-pro' ),pmpro_formatPrice( $level->initial_payment ) );
 			} else {
 				$r = sprintf( __( 'The price for your Membership is <strong>%s</strong> for this payment', 'paid-memberships-pro' ),pmpro_formatPrice( $level->initial_payment ) );
 			}
@@ -2282,6 +2284,9 @@ function pmpro_getLevelAtCheckout( $level_id = null, $discount_code = null ) {
 
 			// Get lowest level ID.
 			$default_level =  min( array_keys( $all_levels ) );
+
+			//Override this to pickup level 9 (Coach (Training))
+			$default_level =  9;
 
 			$level_id = apply_filters( 'pmpro_default_level', intval( $default_level ) );
 			

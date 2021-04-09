@@ -76,8 +76,14 @@
 									<?php } ?>
 									<?php 
 										//To do: Only show CHANGE link if this level is in a group that has upgrade/downgrade rules
-										if(count($pmpro_levels) > 1 && !defined("PMPRO_DEFAULT_LEVEL") && $level->id > 2) { ?>
-										<br><a id="pmpro_actionlink-change" href="<?php echo pmpro_url("levels")?>" id="pmpro_account-change"><?php _e("Change Membership", 'buddyboss-theme' );?></a>
+										if(count($pmpro_levels) > 1 && !defined("PMPRO_DEFAULT_LEVEL") && $level->id > 2) { 
+											if ($current_user->membership_level->id == 9){
+												$changeWording = "Upgrade";
+											} else {
+												$changeWording = "Change";
+											}
+											?>
+										<br><a id="pmpro_actionlink-change" href="<?php echo pmpro_url("levels")?>" id="pmpro_account-change"><?php _e($changeWording. " Membership", 'buddyboss-theme' );?></a>
 									<?php } ?>
 									
 									<?php 
@@ -100,7 +106,7 @@
 												$codeLevel = $wpdb->get_var("SELECT level_id FROM $wpdb->pmpro_discount_codes_levels WHERE code_id = '" . esc_sql($code) . "' LIMIT 1");
 												$codeValue = $wpdb->get_var("SELECT code FROM $wpdb->pmpro_discount_codes WHERE id = '" . esc_sql($code) . "' LIMIT 1");
 												$codeUses = $wpdb->get_var("SELECT uses FROM $wpdb->pmpro_discount_codes WHERE id = '" . esc_sql($code) . "' LIMIT 1");
-												if ($codeLevel == 1){
+												if ($codeLevel == 1 || $codeLevel == 9){
 													$codeName = "Coach";
 													$code_id = $code;
 												} else {
@@ -160,10 +166,15 @@
 									?>
 									<div id='membershipStatus' style="color:rgb(6, 189, 103);"><strong>Active</strong></div>
 									<?php
-								} else {
+								} elseif ($current_user->membership_level->id == 1) {
 									//Paused
 									?>
 									<div id='membershipStatus' style="color:rgb(237, 36, 9);"><strong>Paused</strong></div>
+									<?php
+								} else {
+									//Must Upgrade To Unpause
+									?>
+									<div id='membershipStatus' style="color:rgb(237, 36, 9);"><strong>Upgrade Required</strong></div>
 									<?php
 								}
 								?>
@@ -531,7 +542,7 @@
 									
 						//when would the next payment be			
 						$next_payment_date = strtotime(date("Y-m-d", $payment_date) . " + " . $clevel->cycle_number . " " . $clevel->cycle_period);
-						if ($clevel->name == "Influencer" || $clevel->name == "BDM"){
+						if ($clevel->name == "Influencer" || $clevel->name == "BDM" || $clevel->name == "Coach (Training)"){
 							$next_payment_date = "1901-01-01";
 						}
 					}

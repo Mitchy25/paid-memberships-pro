@@ -174,7 +174,7 @@
 				update_user_meta($current_user->ID, 'first_login',0);
 				$welcome="";
 			}
-			if ($current_user->membership_level->name == "Coach"){ 
+			if ($current_user->membership_level->name == "Coach" || $current_user->membership_level->name == "Coach (Training)"){ 
 				$link = "https://poweredbychange.com/coach-home".$welcome;
 			} elseif ($current_user->membership_level->name == "Influencer" || $current_user->membership_level->name == "BDM"){
 				$link = "https://poweredbychange.com/bdm-home".$welcome;
