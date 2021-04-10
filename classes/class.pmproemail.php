@@ -174,6 +174,23 @@
 			$this->template = apply_filters("pmpro_email_template", "certificate", $this);
 			return $this->sendEmail();
 		}
+
+		function sendKeyEmail($user = NULL, $code = NULL){
+			global $wpdb, $current_user;
+			if(!$user)
+				$user = $current_user;
+			
+			if(!$user)
+				return false;
+			
+			$this->email = $user->user_email;
+			$this->subject = sprintf(__('Your PBC Training Certificate', 'paid-memberships-pro'), get_option("blogname"));
+
+			$this->data = array("user_email" => $user->user_email, "display_name" => $user->display_name, "membership_level_name"=>$current_user->membership_level->name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"), "code"=>$code);
+
+			$this->template = apply_filters("pmpro_email_template", "digital_key", $this);
+			return $this->sendEmail();
+		}
 		
 		function sendCancelEmail($user = NULL, $old_level_id = NULL){
 			global $wpdb, $current_user;
@@ -201,6 +218,33 @@
 			$this->template = apply_filters("pmpro_email_template", "cancel", $this);
 			return $this->sendEmail();
 		}
+
+		// function sendTrainingCancelEmail($user = NULL, $old_level_id = NULL){
+		// 	global $wpdb, $current_user;
+		// 	if(!$user)
+		// 		$user = $current_user;
+			
+		// 	if(!$user)
+		// 		return false;
+			
+		// 	$this->email = $user->user_email;
+		// 	$this->subject = sprintf(__('Your membership at %s has been cancelled', 'paid-memberships-pro'), get_option("blogname"));
+
+		// 	$this->data = array("user_email" => $user->user_email, "display_name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"));
+
+		// 	if(!empty($old_level_id)) {
+		// 		if(!is_array($old_level_id))
+		// 			$old_level_id = array($old_level_id);
+		// 		$this->data['membership_id'] = $old_level_id[0];	//pass just the first as the level id
+		// 		$this->data['membership_level_name'] = pmpro_implodeToEnglish($wpdb->get_col("SELECT name FROM $wpdb->pmpro_membership_levels WHERE id IN('" . implode("','", $old_level_id) . "')"));
+		// 	} else {
+		// 		$this->data['membership_id'] = '';
+		// 		$this->data['membership_level_name'] = __('All Levels', 'paid-memberships-pro' );
+		// 	}
+
+		// 	$this->template = apply_filters("pmpro_email_template", "cancel_training", $this);
+		// 	return $this->sendEmail();
+		// }
 
 		function sendClientCancelEmailToCoach($user = NULL, $old_level_id = NULL, $deleteUserID = NULL){
 			global $wpdb, $current_user;
@@ -250,9 +294,43 @@
 			$this->email = $user->user_email;
 			$this->subject = sprintf(__('Your membership at %s has been paused', 'paid-memberships-pro'), get_option("blogname"));
 
-			$this->data = array("membership_id"=>1,"membership_level_name"=>"Coach", "user_email" => $user->user_email, "display_name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"));
+			$this->data = array("membership_id"=>$user->membership_level->id,"membership_level_name"=>$user->membership_level->name, "user_email" => $user->user_email, "display_name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"));
 
 			$this->template = apply_filters("pmpro_email_template", "membership_paused", $this);
+			return $this->sendEmail();
+		}
+
+		function sendMembershipPausedTrainingEndEmailGraduated($user = NULL){
+			global $wpdb, $current_user;
+			if(!$user)
+				$user = $current_user;
+			
+			if(!$user)
+				return false;
+			
+			$this->email = $user->user_email;
+			$this->subject = sprintf(__('Your membership at %s has been paused', 'paid-memberships-pro'), get_option("blogname"));
+
+			$this->data = array("membership_id"=>$user->membership_level->id,"membership_level_name"=>$user->membership_level->name, "user_email" => $user->user_email, "display_name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"));
+
+			$this->template = apply_filters("pmpro_email_template", "membership_paused_training_end_graduated", $this);
+			return $this->sendEmail();
+		}
+
+		function sendMembershipCancelledTrainingEndEmailNotGraduated($user = NULL){
+			global $wpdb, $current_user;
+			if(!$user)
+				$user = $current_user;
+			
+			if(!$user)
+				return false;
+			
+			$this->email = $user->user_email;
+			$this->subject = sprintf(__('Your membership at %s has been cancelled', 'paid-memberships-pro'), get_option("blogname"));
+
+			$this->data = array("membership_id"=>$user->membership_level->id,"membership_level_name"=>$user->membership_level->name, "user_email" => $user->user_email, "display_name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "siteemail" => pmpro_getOption("from_email"));
+
+			$this->template = apply_filters("pmpro_email_template", "membership_cancelled_training_end_not_graduated", $this);
 			return $this->sendEmail();
 		}
 
@@ -417,7 +495,10 @@
 			}	elseif(pmpro_isLevelFree($user->membership_level))	{
 				if ($user->membership_level->name=="BDM"){
 					//BDM
-					$this->template = "checkout_free_bdm";		
+					$this->template = "checkout_free_bdm";
+				} elseif ($user->membership_level->name=="Coach (Training)"){
+					//Coach (Training)
+					$this->template = "checkout_free_coach_training";
 				} else {
 					//Client
 					$this->template = "checkout_free";		
@@ -445,6 +526,8 @@
 			else
 				$this->data["membership_expiration"] = "";
 			
+			error_log($this->template);
+
 			return $this->sendEmail();
 		}
 		
@@ -928,8 +1011,7 @@
 			return $this->sendEmail();
 		}
 		
-		function sendMembershipExpiringEmail($user = NULL)
-		{
+		function sendMembershipExpiringEmail($user = NULL){
 			global $current_user, $wpdb;
 			if(!$user)
 				$user = $current_user;
@@ -951,6 +1033,58 @@
 			$this->data = array("subject" => $this->subject, "name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "membership_id" => $user->membership_level->id, "membership_level_name" => $user->membership_level->name, "siteemail" => pmpro_getOption("from_email"), "login_link" => pmpro_login_url(), "enddate" => date_i18n(get_option('date_format'), $user->membership_level->enddate), "display_name" => $user->display_name, "user_email" => $user->user_email);
 
 			$this->template = apply_filters("pmpro_email_template", "membership_expiring", $this);
+
+			return $this->sendEmail();
+		}
+
+		function sendMembershipExpiringEmailCoachTrainingTrainingIncomplete($user = NULL)	{
+			global $current_user, $wpdb;
+			if(!$user)
+				$user = $current_user;
+			
+			if(!$user)
+				return false;
+
+			//make sure we have the current membership level data
+			/*$user->membership_level = $wpdb->get_row("SELECT l.id AS ID, l.name AS name, UNIX_TIMESTAMP(CONVERT_TZ(mu.enddate, '+00:00', @@global.time_zone)) as enddate
+														FROM {$wpdb->pmpro_membership_levels} AS l
+														JOIN {$wpdb->pmpro_memberships_users} AS mu ON (l.id = mu.membership_id)
+														WHERE mu.user_id = " . $user->ID . "
+														LIMIT 1");*/
+			$user->membership_level = pmpro_getMembershipLevelForUser($user->ID);
+						
+			$this->email = $user->user_email;
+			$this->subject = sprintf(__("Your membership at %s will end soon", "paid-memberships-pro"), get_option("blogname"));
+
+			$this->data = array("subject" => $this->subject, "name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "membership_id" => $user->membership_level->id, "membership_level_name" => $user->membership_level->name, "siteemail" => pmpro_getOption("from_email"), "login_link" => pmpro_login_url(), "enddate" => date_i18n(get_option('date_format'), $user->membership_level->enddate), "display_name" => $user->display_name, "user_email" => $user->user_email);
+
+			$this->template = apply_filters("pmpro_email_template", "membership_expiring_coach_training_incomplete", $this);
+
+			return $this->sendEmail();
+		}
+
+		function sendMembershipExpiringEmailCoachTrainingTrainingIncompleteDayBefore($user = NULL)	{
+			global $current_user, $wpdb;
+			if(!$user)
+				$user = $current_user;
+			
+			if(!$user)
+				return false;
+
+			//make sure we have the current membership level data
+			/*$user->membership_level = $wpdb->get_row("SELECT l.id AS ID, l.name AS name, UNIX_TIMESTAMP(CONVERT_TZ(mu.enddate, '+00:00', @@global.time_zone)) as enddate
+														FROM {$wpdb->pmpro_membership_levels} AS l
+														JOIN {$wpdb->pmpro_memberships_users} AS mu ON (l.id = mu.membership_id)
+														WHERE mu.user_id = " . $user->ID . "
+														LIMIT 1");*/
+			$user->membership_level = pmpro_getMembershipLevelForUser($user->ID);
+						
+			$this->email = $user->user_email;
+			$this->subject = sprintf(__("Your membership at %s will end soon", "paid-memberships-pro"), get_option("blogname"));
+
+			$this->data = array("subject" => $this->subject, "name" => $user->display_name, "user_login" => $user->user_login, "sitename" => get_option("blogname"), "membership_id" => $user->membership_level->id, "membership_level_name" => $user->membership_level->name, "siteemail" => pmpro_getOption("from_email"), "login_link" => pmpro_login_url(), "enddate" => date_i18n(get_option('date_format'), $user->membership_level->enddate), "display_name" => $user->display_name, "user_email" => $user->user_email);
+
+			$this->template = apply_filters("pmpro_email_template", "membership_expiring_coach_training_incomplete_day_before", $this);
 
 			return $this->sendEmail();
 		}

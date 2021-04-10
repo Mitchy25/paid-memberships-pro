@@ -713,7 +713,8 @@ function pmpro_login_forms_handler_nav( $pmpro_form ) { ?>
 				$levels_page_id = pmpro_getOption( 'levels_page_id' );
 
 				if ( $levels_page_id && pmpro_are_any_visible_levels() ) {
-					$links['register'] = sprintf( '<a href="%s">%s</a>', esc_url( pmpro_url( 'levels' ) ), esc_html__( 'Join Now', 'paid-memberships-pro' ) );
+					// $links['register'] = sprintf( '<a href="%s">%s</a>', esc_url( pmpro_url( 'levels' ) ), esc_html__( 'Join Now', 'paid-memberships-pro' ) );
+					$links['register'] = sprintf( '<a href="%s">%s</a>', esc_url( wp_registration_url() ), esc_html__( 'Register', 'paid-memberships-pro' ) );
 				} else {
 					$links['register'] = sprintf( '<a href="%s">%s</a>', esc_url( wp_registration_url() ), esc_html__( 'Register', 'paid-memberships-pro' ) );
 				}

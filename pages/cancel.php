@@ -50,6 +50,9 @@
 					} elseif ($_REQUEST['levelstocancel'] == 8){
 						//BDM
 						$extraContent = '<br><br>Upon cancellation of your BDM membership you will no longer have access to the PBC website.<br><br>It also means that you will no longer be eligible to receive referral payments from Powered By Change Solutions Pty Ltd for any coaches you have referred.<br><br>You will  be logged out once you  confirm the cancellation.';
+					}  elseif ($_REQUEST['levelstocancel'] == 9){
+						//Coach Training
+						$extraContent = '<br><br>Upon cancellation of your Coach (Training) membership you will no longer have access to the PBC website.<br><br>It also means that you will no longer be eligible to receive referral payments from Powered By Change Solutions Pty Ltd for any coaches you have referred.<br><br>You will  be logged out once you  confirm the cancellation.';
 					}
 					
 					printf(_n('Are you sure you want to cancel your %s membership?' . $extraContent, 'Are you sure you want to cancel your %s memberships?' . $extraContent, count($level_names), 'paid-memberships-pro'), pmpro_implodeToEnglish($level_names)); ?></p>
